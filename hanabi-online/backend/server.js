@@ -15,6 +15,10 @@ const io = new Server(httpServer, {
 
 app.use(express.json());
 
+import authRouter from './routes/auth.js';
+
+app.use('/api/auth', authRouter);
+
 app.get('/', (req, res) => {
    res.send('Hanabi Backend is running!');
 });
