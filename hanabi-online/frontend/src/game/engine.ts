@@ -40,9 +40,22 @@ export class GameEngine {
     throw new Error("performMove() not implemented yet");
   }
 
-  setup(_players: Player[]) {
-    this.players = _players;
-  }
+  setup(players: Player[]) {
+  this.players = players;
+  this.deck = generateDeck();
+  this.discard = [];
+  this.hints = 8;
+  this.strikes = 0;
+  this.turn = 1;
+  this.currentPlayerIndex = 0;
+  this.finished = false;
+
+  this.logLines = ["Game started"];
+
+  this.dealHands();
+
+  this.emitChange();
+   }
 
   listeners: Array<() => void> = [];
 
@@ -67,5 +80,25 @@ export class GameEngine {
 
    getLog() {
    return this.logLines;
+   }
+
+   private initialHandSize(playerCount: number): number {
+   return playerCount <= 3 ? 5 : 4;
+   }
+
+   private dealHands() {
+   const handSize = this.initialHandSize(this.players.length);
+
+   for (const player of this.players) {
+      player.hand = [];
+      player.knownInfo = [];
+
+      for (let i = 0; i < handSize; i++) {
+         const card = this.deck.pop();
+         if (!card) throw new Error("Deck ended during deal!");
+         player.hand.push(card);
+         player.knownInfo.push({});
+      }
+   }
    }
 }
