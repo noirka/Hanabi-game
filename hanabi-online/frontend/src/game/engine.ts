@@ -57,4 +57,15 @@ export class GameEngine {
    for (const cb of this.listeners) cb();
    }
 
+   logLines: string[] = [];
+
+   log(msg: string) {
+   const line = `[Turn ${this.turn}] ${msg}`;
+   this.logLines.push(line);
+   console.log(line);
+   }
+
+   getLog() {
+   return this.logLines;
+   }
 }
