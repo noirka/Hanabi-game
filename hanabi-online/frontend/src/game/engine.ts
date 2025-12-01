@@ -43,4 +43,18 @@ export class GameEngine {
   setup(_players: Player[]) {
     this.players = _players;
   }
+
+  listeners: Array<() => void> = [];
+
+   onChange(cb: () => void) {
+   this.listeners.push(cb);
+   return () => {
+      this.listeners = this.listeners.filter((f) => f !== cb);
+   };
+   }
+
+   private emitChange() {
+   for (const cb of this.listeners) cb();
+   }
+
 }
