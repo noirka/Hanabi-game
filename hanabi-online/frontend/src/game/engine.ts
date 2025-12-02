@@ -1,11 +1,11 @@
-import type { Player, GameSnapshot, Move, Color, Rank } from "./types";
+import type { Player, GameSnapshot, Move, Color, Rank, Card } from "./types";
 import { generateDeck } from "./deck";
 import { deepClone } from "../utils/helpers";
 
 export class GameEngine {
   players: Player[] = [];
   deck = generateDeck();
-  discard = [];
+  discard: Card[] = [];
   fireworks = {
     red: 0,
     blue: 0,
@@ -73,10 +73,42 @@ private advanceTurn() {
   this.turn++;
 }
 
-  performMove(move: Move): never {
+  performMove(move: Move): void {
     this.validateMove(move);
+  if (move.type === "play") {
+    const player = this.players[this.currentPlayerIndex];
 
-    throw new Error("performMove() not implemented yet");
+    const card = player.hand[move.cardIndex];
+    if (!card) throw new Error("Invalid card index");
+
+    if (this.canPlay(card)) {
+      this.fireworks[card.color] += 1;
+      this.log(`${player.name} successfully played ${card.color} ${card.rank}`);
+
+      if (card.rank === 5 && this.hints < 8) {
+        this.hints += 1;
+        this.log(`Completed a 5 — gained a hint.`);
+      }
+    } else {
+      this.discard.push(card);
+      this.strikes += 1;
+      this.log(`${player.name} failed play ${card.color} ${card.rank} — strike ${this.strikes}`);
+
+      if (this.strikes >= 3) {
+        this.finished = true;
+        this.log("Game over — too many strikes");
+      }
+    }
+
+    player.hand.splice(move.cardIndex, 1);
+    player.knownInfo.splice(move.cardIndex, 1);
+
+    this.drawCardInto(player, move.cardIndex);
+
+    this.advanceTurn();
+    this.emitChange();
+    return;
+  }
   }
 
   setup(players: Player[]) {
