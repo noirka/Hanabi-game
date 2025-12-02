@@ -131,6 +131,47 @@ private advanceTurn() {
   this.emitChange();
   return;
   }
+    if (move.type === "hint") {
+    const giver = this.players[this.currentPlayerIndex];
+    const target = this.players.find(p => p.id === move.targetId);
+
+    if (!target) throw new Error("Invalid targetId in hint");
+
+    if (giver.id === target.id) {
+      throw new Error("Player cannot hint themselves");
+    }
+
+    if (this.hints <= 0) {
+      throw new Error("No hint tokens left");
+    }
+
+    this.hints -= 1;
+
+    const { color, rank } = move.hint;
+
+    for (let i = 0; i < target.hand.length; i++) {
+      const card = target.hand[i];
+      const info = target.knownInfo[i];
+
+      if (color && card.color === color) {
+        info.color = card.color;
+      }
+
+      if (rank && card.rank === rank) {
+        info.rank = card.rank;
+      }
+    }
+
+    this.log(
+      `${giver.name} hinted ${target.name}: ` +
+      (color ? `color=${color}` : "") +
+      (rank ? ` rank=${rank}` : "")
+    );
+
+    this.advanceTurn();
+    this.emitChange();
+    return;
+  }
   }
 
   setup(players: Player[]) {
