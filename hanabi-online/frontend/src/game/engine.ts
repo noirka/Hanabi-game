@@ -109,6 +109,28 @@ private advanceTurn() {
     this.emitChange();
     return;
   }
+  if (move.type === "discard") {
+  const player = this.players[this.currentPlayerIndex];
+
+  const card = player.hand[move.cardIndex];
+  if (!card) throw new Error("Invalid card index for discard");
+
+  this.discard.push(card);
+  this.log(`${player.name} discarded ${card.color} ${card.rank}`);
+
+  if (this.hints < 8) {
+    this.hints += 1;
+  }
+
+  player.hand.splice(move.cardIndex, 1);
+  player.knownInfo.splice(move.cardIndex, 1);
+
+  this.drawCardInto(player, move.cardIndex);
+
+  this.advanceTurn();
+  this.emitChange();
+  return;
+  }
   }
 
   setup(players: Player[]) {
