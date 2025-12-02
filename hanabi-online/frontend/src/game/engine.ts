@@ -1,4 +1,4 @@
-import type { Player, GameSnapshot, Move } from "./types";
+import type { Player, GameSnapshot, Move, Color, Rank } from "./types";
 import { generateDeck } from "./deck";
 import { deepClone } from "../utils/helpers";
 
@@ -49,6 +49,29 @@ export class GameEngine {
       throw new Error("It's not this player's turn");
     }
   }
+
+  private canPlay(card: { color: Color; rank: Rank }): boolean {
+  const top = this.fireworks[card.color];
+  return card.rank === top + 1;
+}
+
+private drawCardInto(player: Player, index: number) {
+  const newCard = this.deck.pop();
+  if (!newCard) {
+    player.hand.splice(index, 1);
+    player.knownInfo.splice(index, 1);
+    return;
+  }
+
+  player.hand[index] = newCard;
+  player.knownInfo[index] = {};
+}
+
+private advanceTurn() {
+  this.currentPlayerIndex =
+    (this.currentPlayerIndex + 1) % this.players.length;
+  this.turn++;
+}
 
   performMove(move: Move): never {
     this.validateMove(move);
