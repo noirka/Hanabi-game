@@ -19,6 +19,7 @@ export class GameEngine {
   turn = 1;
   currentPlayerIndex = 0;
   finished = false;
+  lastRoundCounter: number | null = null;
   finalTurnsRemaining: number | null = null;
 
   listeners: Array<() => void> = [];
@@ -166,6 +167,20 @@ private advanceTurn() {
       return;
     }
   }
+
+if (this.deck.length === 0 && this.lastRoundCounter === null) {
+  this.lastRoundCounter = this.players.length;
+  this.log("Deck empty — last round begins");
+}
+
+if (this.lastRoundCounter !== null) {
+  this.lastRoundCounter--;
+
+  if (this.lastRoundCounter <= 0) {
+    this.finished = true;
+    this.log("Game ended — last round completed");
+  }
+}
 
   this.advanceTurn();
   this.emitChange();
