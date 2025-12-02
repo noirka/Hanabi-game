@@ -20,6 +20,9 @@ export class GameEngine {
   currentPlayerIndex = 0;
   finished = false;
 
+  listeners: Array<() => void> = [];
+  logLines: string[] = [];
+
   constructor() {}
 
   snapshot(): GameSnapshot {
@@ -36,69 +39,78 @@ export class GameEngine {
     };
   }
 
-  performMove(_move: Move) {
+  private validateMove(move: Move) {
+    const player = this.players[this.currentPlayerIndex];
+
+    if (!player) {
+      throw new Error("No current player");
+    }
+    if (move.playerId !== player.id) {
+      throw new Error("It's not this player's turn");
+    }
+  }
+
+  performMove(move: Move): never {
+    this.validateMove(move);
+
     throw new Error("performMove() not implemented yet");
   }
 
   setup(players: Player[]) {
-  this.players = players;
-  this.deck = generateDeck();
-  this.discard = [];
-  this.hints = 8;
-  this.strikes = 0;
-  this.turn = 1;
-  this.currentPlayerIndex = 0;
-  this.finished = false;
+    this.players = players;
+    this.deck = generateDeck();
+    this.discard = [];
+    this.hints = 8;
+    this.strikes = 0;
+    this.turn = 1;
+    this.currentPlayerIndex = 0;
+    this.finished = false;
 
-  this.logLines = ["Game started"];
+    this.logLines = ["Game started"];
 
-  this.dealHands();
+    this.dealHands();
 
-  this.emitChange();
-   }
+    this.emitChange();
+  }
 
-  listeners: Array<() => void> = [];
-
-   onChange(cb: () => void) {
-   this.listeners.push(cb);
-   return () => {
+  onChange(cb: () => void) {
+    this.listeners.push(cb);
+    return () => {
       this.listeners = this.listeners.filter((f) => f !== cb);
-   };
-   }
+    };
+  }
 
-   private emitChange() {
-   for (const cb of this.listeners) cb();
-   }
+  private emitChange() {
+    for (const cb of this.listeners) cb();
+  }
 
-   logLines: string[] = [];
+  log(msg: string) {
+    const line = `[Turn ${this.turn}] ${msg}`;
+    this.logLines.push(line);
+    console.log(line);
+  }
 
-   log(msg: string) {
-   const line = `[Turn ${this.turn}] ${msg}`;
-   this.logLines.push(line);
-   console.log(line);
-   }
+  getLog() {
+    return this.logLines;
+  }
 
-   getLog() {
-   return this.logLines;
-   }
+  private initialHandSize(playerCount: number): number {
+    return playerCount <= 3 ? 5 : 4;
+  }
 
-   private initialHandSize(playerCount: number): number {
-   return playerCount <= 3 ? 5 : 4;
-   }
+  private dealHands() {
+    const handSize = this.initialHandSize(this.players.length);
 
-   private dealHands() {
-   const handSize = this.initialHandSize(this.players.length);
-
-   for (const player of this.players) {
+    for (const player of this.players) {
       player.hand = [];
       player.knownInfo = [];
 
       for (let i = 0; i < handSize; i++) {
-         const card = this.deck.pop();
-         if (!card) throw new Error("Deck ended during deal!");
-         player.hand.push(card);
-         player.knownInfo.push({});
+        const card = this.deck.pop();
+        if (!card) throw new Error("Deck ended during deal!");
+        player.hand.push(card);
+        player.knownInfo.push({});
       }
-   }
-   }
+    }
+  }
 }
