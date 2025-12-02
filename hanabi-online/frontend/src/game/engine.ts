@@ -6,7 +6,7 @@ export class GameEngine {
   players: Player[] = [];
   deck = generateDeck();
   discard: Card[] = [];
-  fireworks = {
+  fireworks: Record<Color, number> = {
     red: 0,
     blue: 0,
     green: 0,
@@ -19,7 +19,7 @@ export class GameEngine {
   turn = 1;
   currentPlayerIndex = 0;
   finished = false;
-  lastRoundCounter: number | null = null;
+
   finalTurnsRemaining: number | null = null;
 
   listeners: Array<() => void> = [];
@@ -43,209 +43,168 @@ export class GameEngine {
 
   private validateMove(move: Move) {
     const player = this.players[this.currentPlayerIndex];
-
-    if (!player) {
-      throw new Error("No current player");
-    }
-    if (move.playerId !== player.id) {
-      throw new Error("It's not this player's turn");
-    }
+    if (!player) throw new Error("No current player");
+    if (move.playerId !== player.id) throw new Error("It's not this player's turn");
   }
 
   private canPlay(card: { color: Color; rank: Rank }): boolean {
-  const top = this.fireworks[card.color];
-  return card.rank === top + 1;
-}
-
-private drawCardInto(player: Player, index: number) {
-  const newCard = this.deck.pop();
-  if (!newCard) {
-    player.hand.splice(index, 1);
-    player.knownInfo.splice(index, 1);
-    return;
+    const top = this.fireworks[card.color];
+    return card.rank === top + 1;
   }
 
-  player.hand[index] = newCard;
-  player.knownInfo[index] = {};
-}
+  private drawCardInto(player: Player, index: number) {
+    const newCard = this.deck.pop();
+    if (!newCard) {
+      player.hand.splice(index, 1);
+      player.knownInfo.splice(index, 1);
+      return;
+    }
+    player.hand[index] = newCard;
+    player.knownInfo[index] = {};
+  }
 
-private advanceTurn() {
-  this.currentPlayerIndex =
-    (this.currentPlayerIndex + 1) % this.players.length;
-  this.turn++;
-}
+  private advanceTurn() {
+    this.currentPlayerIndex =
+      (this.currentPlayerIndex + 1) % this.players.length;
+    this.turn++;
+  }
+
+  private triggerFinalRoundIfNeeded() {
+    if (this.deck.length === 0 && this.finalTurnsRemaining === null) {
+      this.finalTurnsRemaining = this.players.length;
+      this.log("Deck empty — final round begins");
+    }
+  }
+
+  private processFinalRoundStep(): boolean {
+    if (this.finalTurnsRemaining !== null) {
+      this.finalTurnsRemaining -= 1;
+      if (this.finalTurnsRemaining <= 0) {
+        this.finished = true;
+        this.log("Final round completed — game finished");
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private checkGameOverCommon() {
+    if (this.strikes >= 3) {
+      this.finished = true;
+      this.log("Game over — too many strikes");
+      return true;
+    }
+
+    const total = Object.values(this.fireworks).reduce((a, b) => a + b, 0);
+    if (total === 25) {
+      this.finished = true;
+      this.log("Perfect score! All fireworks completed.");
+      return true;
+    }
+
+    return false;
+  }
 
   performMove(move: Move): void {
     this.validateMove(move);
-  if (move.type === "play") {
+
     const player = this.players[this.currentPlayerIndex];
 
-    const card = player.hand[move.cardIndex];
-    if (!card) throw new Error("Invalid card index");
+    if (move.type === "play") {
+      const card = player.hand[move.cardIndex];
+      if (!card) throw new Error("Invalid card index");
 
-    if (this.canPlay(card)) {
-      this.fireworks[card.color] += 1;
-      const sum = Object.values(this.fireworks).reduce((a, b) => a + b, 0);
-    if (sum === 25) {
-   this.finished = true;
-    this.log("Perfect score! All fireworks completed.");
-   this.emitChange();
-   return;
-   }
-      this.log(`${player.name} successfully played ${card.color} ${card.rank}`);
+      if (this.canPlay(card)) {
+        this.fireworks[card.color] += 1;
+        this.log(`${player.name} successfully played ${card.color} ${card.rank}`);
 
-      if (card.rank === 5 && this.hints < 8) {
-        this.hints += 1;
-        this.log(`Completed a 5 — gained a hint.`);
+        if (card.rank === 5 && this.hints < 8) {
+          this.hints += 1;
+          this.log("Completed a 5 — gained a hint.");
+        }
+      } else {
+        this.discard.push(card);
+        this.strikes++;
+        this.log(`${player.name} failed play ${card.color} ${card.rank} — strike ${this.strikes}`);
       }
-    } else {
+
+      player.hand.splice(move.cardIndex, 1);
+      player.knownInfo.splice(move.cardIndex, 1);
+      this.drawCardInto(player, move.cardIndex);
+
+      this.triggerFinalRoundIfNeeded();
+      if (this.checkGameOverCommon()) {
+        this.emitChange();
+        return;
+      }
+      if (this.processFinalRoundStep()) {
+        this.emitChange();
+        return;
+      }
+
+      this.advanceTurn();
+      this.emitChange();
+      return;
+    }
+
+    if (move.type === "discard") {
+      const card = player.hand[move.cardIndex];
+      if (!card) throw new Error("Invalid card index for discard");
+
       this.discard.push(card);
-      this.strikes += 1;
-      this.log(`${player.name} failed play ${card.color} ${card.rank} — strike ${this.strikes}`);
+      this.log(`${player.name} discarded ${card.color} ${card.rank}`);
 
-      if (this.strikes >= 3) {
-        this.finished = true;
-        this.log("Game over — too many strikes");
+      if (this.hints < 8) this.hints++;
+
+      player.hand.splice(move.cardIndex, 1);
+      player.knownInfo.splice(move.cardIndex, 1);
+      this.drawCardInto(player, move.cardIndex);
+
+      this.triggerFinalRoundIfNeeded();
+      if (this.processFinalRoundStep()) {
+        this.emitChange();
+        return;
       }
-    }
 
-    player.hand.splice(move.cardIndex, 1);
-    player.knownInfo.splice(move.cardIndex, 1);
-
-    this.drawCardInto(player, move.cardIndex);
-
-  if (this.deck.length === 0 && this.finalTurnsRemaining === null) {
-    this.finalTurnsRemaining = this.players.length;
-    this.log("Deck empty — final round begins");
-  }
-
-  if (this.finalTurnsRemaining !== null) {
-    this.finalTurnsRemaining -= 1;
-
-    if (this.finalTurnsRemaining <= 0) {
-      this.finished = true;
-      this.log("Final round completed — game finished");
+      this.advanceTurn();
       this.emitChange();
       return;
     }
-  }
 
-    this.advanceTurn();
-    this.emitChange();
-    return;
-  }
-  if (move.type === "discard") {
-  const player = this.players[this.currentPlayerIndex];
-
-  const card = player.hand[move.cardIndex];
-  if (!card) throw new Error("Invalid card index for discard");
-
-  this.discard.push(card);
-  this.log(`${player.name} discarded ${card.color} ${card.rank}`);
-
-  if (this.hints < 8) {
-    this.hints += 1;
-  }
-
-  player.hand.splice(move.cardIndex, 1);
-  player.knownInfo.splice(move.cardIndex, 1);
-
-  this.drawCardInto(player, move.cardIndex);
-
-  if (this.deck.length === 0 && this.finalTurnsRemaining === null) {
-    this.finalTurnsRemaining = this.players.length;
-    this.log("Deck empty — final round begins");
-  }
-
-  if (this.finalTurnsRemaining !== null) {
-    this.finalTurnsRemaining -= 1;
-
-    if (this.finalTurnsRemaining <= 0) {
-      this.finished = true;
-      this.log("Final round completed — game finished");
-      this.emitChange();
-      return;
-    }
-  }
-
-if (this.deck.length === 0 && this.lastRoundCounter === null) {
-  this.lastRoundCounter = this.players.length;
-  this.log("Deck empty — last round begins");
-}
-
-if (this.lastRoundCounter !== null) {
-  this.lastRoundCounter--;
-
-  if (this.lastRoundCounter <= 0) {
-    this.finished = true;
-    this.log("Game ended — last round completed");
-  }
-}
-
-  this.advanceTurn();
-  this.emitChange();
-  return;
-  }
     if (move.type === "hint") {
-    const giver = this.players[this.currentPlayerIndex];
-    const target = this.players.find(p => p.id === move.targetId);
+      const giver = this.players[this.currentPlayerIndex];
+      const target = this.players.find(p => p.id === move.targetId);
+      if (!target) throw new Error("Invalid targetId");
+      if (giver.id === target.id) throw new Error("Player cannot hint themselves");
+      if (this.hints <= 0) throw new Error("No hint tokens left");
 
-    if (!target) throw new Error("Invalid targetId in hint");
+      this.hints--;
+      const { color, rank } = move.hint;
 
-    if (giver.id === target.id) {
-      throw new Error("Player cannot hint themselves");
-    }
+      for (let i = 0; i < target.hand.length; i++) {
+        const card = target.hand[i];
+        const info = target.knownInfo[i];
 
-    if (this.hints <= 0) {
-      throw new Error("No hint tokens left");
-    }
-
-    this.hints -= 1;
-
-    const { color, rank } = move.hint;
-
-    for (let i = 0; i < target.hand.length; i++) {
-      const card = target.hand[i];
-      const info = target.knownInfo[i];
-
-      if (color && card.color === color) {
-        info.color = card.color;
+        if (color && card.color === color) info.color = color;
+        if (rank && card.rank === rank) info.rank = rank;
       }
 
-      if (rank && card.rank === rank) {
-        info.rank = card.rank;
+      this.log(
+        `${giver.name} hinted ${target.name}: ` +
+        (color ? `color=${color} ` : "") +
+        (rank ? `rank=${rank}` : "")
+      );
+
+      this.triggerFinalRoundIfNeeded();
+      if (this.processFinalRoundStep()) {
+        this.emitChange();
+        return;
       }
-    }
 
-    this.log(
-      `${giver.name} hinted ${target.name}: ` +
-      (color ? `color=${color}` : "") +
-      (rank ? ` rank=${rank}` : "")
-    );
-    
-  if (this.deck.length === 0 && this.finalTurnsRemaining === null) {
-    this.finalTurnsRemaining = this.players.length;
-    this.log("Deck empty — final round begins");
-  }
-
-  if (this.finalTurnsRemaining !== null) {
-    this.finalTurnsRemaining -= 1;
-
-    if (this.finalTurnsRemaining <= 0) {
-      this.finished = true;
-      this.log("Final round completed — game finished");
+      this.advanceTurn();
       this.emitChange();
       return;
     }
-  }
-
-    this.advanceTurn();
-    this.emitChange();
-    if (this.strikes >= 3) {
-    this.finished = true;
-   }
-    return;
-  }
   }
 
   setup(players: Player[]) {
@@ -257,18 +216,17 @@ if (this.lastRoundCounter !== null) {
     this.turn = 1;
     this.currentPlayerIndex = 0;
     this.finished = false;
+    this.finalTurnsRemaining = null;
 
     this.logLines = ["Game started"];
-
     this.dealHands();
-
     this.emitChange();
   }
 
   onChange(cb: () => void) {
     this.listeners.push(cb);
     return () => {
-      this.listeners = this.listeners.filter((f) => f !== cb);
+      this.listeners = this.listeners.filter(f => f !== cb);
     };
   }
 
