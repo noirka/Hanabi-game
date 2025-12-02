@@ -19,6 +19,7 @@ export class GameEngine {
   turn = 1;
   currentPlayerIndex = 0;
   finished = false;
+  finalTurnsRemaining: number | null = null;
 
   listeners: Array<() => void> = [];
   logLines: string[] = [];
@@ -83,6 +84,13 @@ private advanceTurn() {
 
     if (this.canPlay(card)) {
       this.fireworks[card.color] += 1;
+      const sum = Object.values(this.fireworks).reduce((a, b) => a + b, 0);
+    if (sum === 25) {
+   this.finished = true;
+    this.log("Perfect score! All fireworks completed.");
+   this.emitChange();
+   return;
+   }
       this.log(`${player.name} successfully played ${card.color} ${card.rank}`);
 
       if (card.rank === 5 && this.hints < 8) {
@@ -105,6 +113,22 @@ private advanceTurn() {
 
     this.drawCardInto(player, move.cardIndex);
 
+  if (this.deck.length === 0 && this.finalTurnsRemaining === null) {
+    this.finalTurnsRemaining = this.players.length;
+    this.log("Deck empty — final round begins");
+  }
+
+  if (this.finalTurnsRemaining !== null) {
+    this.finalTurnsRemaining -= 1;
+
+    if (this.finalTurnsRemaining <= 0) {
+      this.finished = true;
+      this.log("Final round completed — game finished");
+      this.emitChange();
+      return;
+    }
+  }
+
     this.advanceTurn();
     this.emitChange();
     return;
@@ -126,6 +150,22 @@ private advanceTurn() {
   player.knownInfo.splice(move.cardIndex, 1);
 
   this.drawCardInto(player, move.cardIndex);
+
+  if (this.deck.length === 0 && this.finalTurnsRemaining === null) {
+    this.finalTurnsRemaining = this.players.length;
+    this.log("Deck empty — final round begins");
+  }
+
+  if (this.finalTurnsRemaining !== null) {
+    this.finalTurnsRemaining -= 1;
+
+    if (this.finalTurnsRemaining <= 0) {
+      this.finished = true;
+      this.log("Final round completed — game finished");
+      this.emitChange();
+      return;
+    }
+  }
 
   this.advanceTurn();
   this.emitChange();
@@ -167,6 +207,22 @@ private advanceTurn() {
       (color ? `color=${color}` : "") +
       (rank ? ` rank=${rank}` : "")
     );
+    
+  if (this.deck.length === 0 && this.finalTurnsRemaining === null) {
+    this.finalTurnsRemaining = this.players.length;
+    this.log("Deck empty — final round begins");
+  }
+
+  if (this.finalTurnsRemaining !== null) {
+    this.finalTurnsRemaining -= 1;
+
+    if (this.finalTurnsRemaining <= 0) {
+      this.finished = true;
+      this.log("Final round completed — game finished");
+      this.emitChange();
+      return;
+    }
+  }
 
     this.advanceTurn();
     this.emitChange();
