@@ -226,6 +226,9 @@ private advanceTurn() {
 
     this.advanceTurn();
     this.emitChange();
+    if (this.strikes >= 3) {
+    this.finished = true;
+   }
     return;
   }
   }
