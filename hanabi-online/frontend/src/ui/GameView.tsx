@@ -1,8 +1,13 @@
 import React from "react";
-import type { GameSnapshot } from "../game/types";
 import type { GameEngine } from "../game/engine";
 import { HandView } from "./HandView";
 import { GameControls } from "./GameControls";
+import type { GameSnapshot, Move } from "../game/types";
+
+interface Props {
+  snapshot: GameSnapshot;
+  sendMove: (m: Move) => void;
+}
 
 export function GameView({ engine }: { engine: GameEngine }) {
   const [, setTick] = React.useState(0);

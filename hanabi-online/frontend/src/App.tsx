@@ -1,21 +1,37 @@
-import React from "react";
-import "./App.css";
+import { useEffect, useState } from "react";
+import { GameEngine } from "./game/engine";
 import { GameView } from "./ui/GameView";
-import { newGameWithBots } from "./game/engine";
-import type { GameEngine } from "./game/engine";
+import type { GameSnapshot, Move } from "./game/types";
 
-export default function App() {
-  const [engine] = React.useState<GameEngine>(() => newGameWithBots({ players: 3, includeBots: true }));
+const engine = new GameEngine();
+
+function App() {
+  const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = engine.onChange(() => {
+      setSnapshot(engine.snapshot());
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const sendMove = (move: Move) => {
+    engine.performMove(move);
+  };
 
   return (
-    <div className="app">
-      <header>
-        <h1>Hanabi</h1>
-      </header>
-
-      <main>
-        <GameView engine={engine} />
-      </main>
+    <div style={{ padding: 20 }}>
+      {snapshot ? (
+        <GameView
+          snapshot={snapshot}
+          sendMove={sendMove}
+        />
+      ) : (
+        "Loading game..."
+      )}
     </div>
   );
 }
+
+export default App;
