@@ -106,11 +106,20 @@ export class GameEngine {
   }
 
   performMove(move: Move): void {
+    if (this.finished) {
+  this.log("Move ignored — game already finished");
+  return;
+  }
+
     this.validateMove(move);
 
     const player = this.players[this.currentPlayerIndex];
 
     if (move.type === "play") {
+      if (move.cardIndex < 0 || move.cardIndex >= player.hand.length) {
+  throw new Error("Invalid cardIndex in play");
+  }
+
       const card = player.hand[move.cardIndex];
       if (!card) throw new Error("Invalid card index");
 
@@ -148,6 +157,10 @@ export class GameEngine {
     }
 
     if (move.type === "discard") {
+      if (move.cardIndex < 0 || move.cardIndex >= player.hand.length) {
+  throw new Error("Invalid cardIndex in discard");
+  }
+
       const card = player.hand[move.cardIndex];
       if (!card) throw new Error("Invalid card index for discard");
 
