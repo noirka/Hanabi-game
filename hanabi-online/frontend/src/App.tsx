@@ -1,22 +1,21 @@
-import "./App.css"
+import React from "react";
+import "./App.css";
+import { GameView } from "./ui/GameView";
+import { newGameWithBots } from "./game/engine";
+import type { GameEngine } from "./game/engine";
 
 export default function App() {
+  const [engine] = React.useState<GameEngine>(() => newGameWithBots({ players: 3, includeBots: true }));
+
   return (
     <div className="app">
-      <header className="header">
-        <h1>Hanabi Online</h1>
+      <header>
+        <h1>Hanabi</h1>
       </header>
 
-      <main className="main">
-        <section className="section">
-          <h2>Game placeholder</h2>
-          <p>Game UI will be added in next commits.</p>
-        </section>
+      <main>
+        <GameView engine={engine} />
       </main>
-
-      <footer className="footer">
-        <small>© 2025 Hanabi Project</small>
-      </footer>
     </div>
   );
 }
