@@ -1,22 +1,19 @@
 import React from "react";
+import type { Card } from "../game/types";
 
-export default function CardView(props: {
-  color: string;
-  rank: number;
-  hidden?: boolean;
-}) {
+export function CardView({ card, hidden }: { card: Card | null; hidden?: boolean }) {
+  if (hidden || !card) {
+    return (
+      <div className="card hidden-card">
+        ?
+      </div>
+    );
+  }
+
   return (
-    <div style={{
-      width: 40,
-      height: 60,
-      border: "1px solid white",
-      borderRadius: 4,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 18,
-    }}>
-      {props.hidden ? "??" : `${props.color[0].toUpperCase()}${props.rank}`}
+    <div className="card">
+      <div className="card-color">{card.color}</div>
+      <div className="card-rank">{card.rank}</div>
     </div>
   );
 }
