@@ -4,10 +4,6 @@ import { HandView } from "./HandView";
 import { GameControls } from "./GameControls";
 import type { GameSnapshot, Move } from "../game/types";
 
-interface Props {
-  snapshot: GameSnapshot;
-  sendMove: (m: Move) => void;
-}
 
 export function GameView({ engine }: { engine: GameEngine }) {
   const [, setTick] = React.useState(0);
@@ -17,44 +13,42 @@ export function GameView({ engine }: { engine: GameEngine }) {
     return unsub;
   }, [engine]);
 
-  const snap = engine.snapshot();
-  const players = snap.players;
-  const currentPlayer = players[snap.currentPlayerIndex];
-
-  const sendMove = (m: any) => {
-    try {
-      engine.performMove(m);
-    } catch (err) {
-      console.error("performMove error", err);
-    }
-  };
+   const snapshot = engine.snapshot();
+  const current = snapshot.players[snapshot.currentPlayerIndex];
 
   return (
-    <div className="game-board">
-      <div className="left">
-        <h3>Info</h3>
-        <p>Hints: {snap.hints}</p>
-        <p>Strikes: {snap.strikes}</p>
-        <p>Deck: {snap.deckCount}</p>
-      </div>
+  <div style={{ padding: "12px" }}>
+    <h2>Hanabi Online</h2>
 
-      <div className="center">
-        <h2>Players</h2>
-        {players.map((p) => (
-          <div key={p.id} className={p.id === currentPlayer?.id ? "player active" : "player"}>
-            <HandView
-              player={p as any}
-              isMe={p.id === currentPlayer?.id}
-              onPlay={(i) => sendMove({ type: "play", playerId: p.id, cardIndex: i })}
-              onDiscard={(i) => sendMove({ type: "discard", playerId: p.id, cardIndex: i })}
-            />
-          </div>
-        ))}
-      </div>
+    <p>
+      <b>Turn:</b> {engine.turn}
+      {" | "}
+      <b>Hints:</b> {engine.hints}
+      {" | "}
+      <b>Strikes:</b> {engine.strikes}
+      {" | "}
+      <b>Deck:</b> {engine.deck.length}
+    </p>
 
-      <div className="right">
-        <GameControls players={players as any} currentPlayer={currentPlayer as any} sendMove={sendMove} />
+    <hr />
+
+    {engine.players.map((p) => (
+      <div key={p.id} style={{ marginBottom: "20px" }}>
+        <h3>
+          {p.name}
+          {engine.players[engine.currentPlayerIndex].id === p.id
+            ? " ← current"
+            : ""}
+        </h3>
+
+        <HandView player={p} />
+
+        {engine.players[engine.currentPlayerIndex].id === p.id && (
+          <GameControls engine={engine} player={p} />
+        )}
       </div>
-    </div>
-  );
+    ))}
+  </div>
+);
+
 }
