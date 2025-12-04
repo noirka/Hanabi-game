@@ -32,6 +32,51 @@ export function GameView({ engine }: { engine: GameEngine }) {
 
     <hr />
 
+    {/* Fireworks */}
+<div style={{ marginBottom: "12px" }}>
+  <h3>Fireworks</h3>
+  <div style={{ display: "flex", gap: "8px" }}>
+    {Object.entries(engine.fireworks).map(([color, value]) => (
+      <div
+        key={color}
+        style={{
+          padding: "6px 10px",
+          background: "#333",
+          borderRadius: "4px",
+        }}
+      >
+        {color}: {value}
+      </div>
+    ))}
+  </div>
+</div>
+
+  <div style={{ marginBottom: "12px" }}>
+    <h3>Discard pile</h3>
+
+    {engine.discard.length === 0 && <p>No cards discarded yet.</p>}
+
+    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+      {engine.discard.map((c) => (
+        <div
+          key={c.id}
+          style={{
+            padding: "4px 8px",
+            border: "1px solid #444",
+            borderRadius: "4px",
+            fontSize: "14px",
+            background: "#222",
+          }}
+        >
+          {c.color} {c.rank}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <hr />
+
+
     {engine.players.map((p) => (
       <div key={p.id} style={{ marginBottom: "20px" }}>
         <h3>
