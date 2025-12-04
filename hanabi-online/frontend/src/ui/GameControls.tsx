@@ -1,22 +1,35 @@
 import React from "react";
-import type { Move, Player } from "../game/types";
+import type { GameEngine } from "../game/engine";
+import type { Player } from "../game/types";
 
 export function GameControls({
-  players,
-  currentPlayer,
-  sendMove,
+  engine,
+  player,
 }: {
-  players: Player[];
-  currentPlayer: Player;
-  sendMove: (m: Move) => void;
+  engine: GameEngine;
+  player: Player;
 }) {
   return (
-    <div className="game-controls">
-      <p>Current: {currentPlayer?.name}</p>
-      {/* приклади кнопок — UI викликає sendMove */}
+    <div style={{ marginTop: "8px" }}>
       <button onClick={() => {
-        sendMove({ type: "discard", playerId: currentPlayer.id, cardIndex: 0 });
-      }}>Discard 0</button>
+        engine.performMove({
+          type: "play",
+          playerId: player.id,
+          cardIndex: 0,
+        });
+      }}>
+        Play card 0
+      </button>
+
+      <button onClick={() => {
+        engine.performMove({
+          type: "discard",
+          playerId: player.id,
+          cardIndex: 0,
+        });
+      }}>
+        Discard card 0
+      </button>
     </div>
   );
 }
