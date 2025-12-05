@@ -1,37 +1,24 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import GameView from "./ui/GameView";
 import { GameEngine } from "./game/engine";
-import { GameView } from "./ui/GameView";
-import type { GameSnapshot, Move } from "./game/types";
 
-const engine = new GameEngine();
-
-function App() {
-  const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
+export default function App() {
+  const [engine, setEngine] = useState<GameEngine | null>(null);
 
   useEffect(() => {
-    const unsubscribe = engine.onChange(() => {
-      setSnapshot(engine.snapshot());
-    });
 
-    return unsubscribe;
+    setTimeout(() => {
+      const eng = new GameEngine();
+      eng.setup([
+        { id: "p1", name: "Player", hand: [], knownInfo: [] },
+        { id: "b1", name: "Bot", isBot: true, hand: [], knownInfo: [] }
+      ]);
+      setEngine(eng);
+    }, 0);
+
   }, []);
 
-  const sendMove = (move: Move) => {
-    engine.performMove(move);
-  };
+  if (!engine) return <>Loading game...</>;
 
-  return (
-    <div style={{ padding: 20 }}>
-      {snapshot ? (
-        <GameView
-          snapshot={snapshot}
-          sendMove={sendMove}
-        />
-      ) : (
-        "Loading game..."
-      )}
-    </div>
-  );
+  return <GameView engine={engine} />;
 }
-
-export default App;

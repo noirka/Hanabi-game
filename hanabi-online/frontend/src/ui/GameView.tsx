@@ -5,7 +5,7 @@ import { GameControls } from "./GameControls";
 import { FireworksView } from './FireworksView'; 
 import { DiscardPile } from './DiscardPile';
 
-export function GameView({ engine }: { engine: GameEngine }) {
+export default function GameView({ engine }: { engine: GameEngine }) {
   const [, setTick] = React.useState(0);
 
   React.useEffect(() => {
