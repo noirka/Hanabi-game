@@ -106,7 +106,7 @@ export class GameEngine {
     return false;
   }
 
-  performMove(move: Move): void {
+  async performMove(move: Move): Promise<void> {
     if (this.finished) {
   this.log("Move ignored — game already finished");
   return;
@@ -154,6 +154,7 @@ export class GameEngine {
 
       this.advanceTurn();
       this.emitChange();
+      await this.startNextIfBot();
       return;
     }
 
@@ -182,6 +183,7 @@ export class GameEngine {
 
       this.advanceTurn();
       this.emitChange();
+      await this.startNextIfBot();
       return;
     }
 
@@ -217,6 +219,7 @@ export class GameEngine {
 
       this.advanceTurn();
       this.emitChange();
+      await this.startNextIfBot();
       return;
     }
   }
@@ -235,6 +238,14 @@ export class GameEngine {
     this.log(`Bot ${bot.name} error: ${String(err)}`);
   }
   }
+
+  private async startNextIfBot() {
+  const current = this.players[this.currentPlayerIndex];
+  if (!current || !current.isBot) return;
+
+  await this.performBotMove(current.id);
+}
+
 
   setup(players: Player[]) {
     this.players = players;
