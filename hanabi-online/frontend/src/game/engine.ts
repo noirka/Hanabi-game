@@ -1,6 +1,7 @@
 import type { Player, GameSnapshot, Move, Color, Rank, Card } from "./types";
 import { generateDeck } from "./deck";
 import { deepClone } from "../utils/helpers";
+import { decideMove } from "./bot";
 
 export class GameEngine {
   players: Player[] = [];
@@ -218,6 +219,21 @@ export class GameEngine {
       this.emitChange();
       return;
     }
+  }
+
+  async performBotMove(botId: string): Promise<void> {
+  const bot = this.players.find((p) => p.id === botId && p.isBot);
+  if (!bot) return;
+
+  try {
+    await new Promise((res) => setTimeout(res, 350));
+
+    const move = decideMove(this, bot);
+
+    this.performMove(move);
+  } catch (err) {
+    this.log(`Bot ${bot.name} error: ${String(err)}`);
+  }
   }
 
   setup(players: Player[]) {
