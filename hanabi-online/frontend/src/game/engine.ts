@@ -224,7 +224,7 @@ export class GameEngine {
     }
   }
 
-  async performBotMove(botId: string): Promise<void> {
+async performBotMove(botId: string): Promise<void> {
   const bot = this.players.find((p) => p.id === botId && p.isBot);
   if (!bot) return;
 
@@ -233,7 +233,13 @@ export class GameEngine {
 
     const move = decideMove(this, bot);
 
+    this.log(`Bot ${bot.name} decided move: ${JSON.stringify(move)}`);
+
     this.performMove(move);
+
+    if (this.finished) {
+      this.log(`Game finished after bot move.`);
+    }
   } catch (err) {
     this.log(`Bot ${bot.name} error: ${String(err)}`);
   }
