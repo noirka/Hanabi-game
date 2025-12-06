@@ -1,9 +1,9 @@
-import React from "react"; 
+import React from "react";
 import type { GameEngine } from "../game/engine";
 import { HandView } from "./HandView";
 import { GameControls } from "./GameControls";
-import { FireworksView } from './FireworksView'; 
-import { DiscardPile } from './DiscardPile';
+import { FireworksView } from "./FireworksView";
+import { DiscardPile } from "./DiscardPile";
 import { GameLog } from "./GameLog";
 
 export default function GameView({ engine }: { engine: GameEngine }) {
@@ -17,9 +17,28 @@ export default function GameView({ engine }: { engine: GameEngine }) {
   const snapshot = engine.snapshot();
   const current = snapshot.players[snapshot.currentPlayerIndex];
 
+  const isFinished = snapshot.finished;
+
   return (
     <div style={{ padding: 12 }}>
       <h2>Hanabi</h2>
+
+      {isFinished && (
+        <div
+          style={{
+            background: "#800",
+            padding: "8px",
+            borderRadius: 6,
+            color: "white",
+            fontWeight: 700,
+            marginBottom: 12,
+            textAlign: "center",
+          }}
+        >
+          GAME OVER — Final Score:{" "}
+          {Object.values(snapshot.fireworks).reduce((a, b) => a + b, 0)}
+        </div>
+      )}
 
       <p>
         <b>Turn:</b> {snapshot.turn}{" | "}
@@ -35,15 +54,42 @@ export default function GameView({ engine }: { engine: GameEngine }) {
       <section style={{ display: "flex", gap: 16 }}>
         <div style={{ flex: 1 }}>
           {snapshot.players.map((p) => (
-            <div key={p.id} style={{ marginBottom: 16, padding: 8, background: "#1f1f1f", borderRadius: 6 }}>
+            <div
+              key={p.id}
+              style={{
+                marginBottom: 16,
+                padding: 8,
+                background: "#1f1f1f",
+                borderRadius: 6,
+              }}
+            >
               <HandView
                 player={p}
-                isMe={p.id === current.id} 
-                onPlay={(i) => engine.performMove({ type: "play", playerId: p.id, cardIndex: i })}
-                onDiscard={(i) => engine.performMove({ type: "discard", playerId: p.id, cardIndex: i })}
+                isMe={p.id === current.id}
+                onPlay={
+                  !isFinished
+                    ? (i) =>
+                        engine.performMove({
+                          type: "play",
+                          playerId: p.id,
+                          cardIndex: i,
+                        })
+                    : undefined
+                }
+                onDiscard={
+                  !isFinished
+                    ? (i) =>
+                        engine.performMove({
+                          type: "discard",
+                          playerId: p.id,
+                          cardIndex: i,
+                        })
+                    : undefined
+                }
               />
-              {p.id === current.id && (
-                <GameControls engine={engine} player={p} /> 
+
+              {p.id === current.id && !isFinished && (
+                <GameControls engine={engine} player={p} />
               )}
             </div>
           ))}
