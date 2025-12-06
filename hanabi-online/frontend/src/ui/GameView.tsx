@@ -4,6 +4,7 @@ import { HandView } from "./HandView";
 import { GameControls } from "./GameControls";
 import { FireworksView } from './FireworksView'; 
 import { DiscardPile } from './DiscardPile';
+import { GameLog } from "./GameLog";
 
 export default function GameView({ engine }: { engine: GameEngine }) {
   const [, setTick] = React.useState(0);
@@ -50,6 +51,10 @@ export default function GameView({ engine }: { engine: GameEngine }) {
 
         <aside style={{ width: 300 }}>
           <DiscardPile discard={snapshot.discard} />
+
+          <div style={{ marginTop: 16 }}>
+            <GameLog lines={engine.getLog()} />
+          </div>
         </aside>
       </section>
     </div>
