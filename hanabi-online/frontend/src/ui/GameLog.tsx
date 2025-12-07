@@ -3,10 +3,12 @@ import React, { useEffect, useRef } from "react";
 export function GameLog({ lines }: { lines: string[] }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  const visible = lines.slice(-100).reverse();
+
   useEffect(() => {
     const div = containerRef.current;
     if (!div) return;
-    div.scrollTop = div.scrollHeight; 
+    div.scrollTop = 0; 
   }, [lines]);
 
   return (
@@ -23,7 +25,7 @@ export function GameLog({ lines }: { lines: string[] }) {
         color: "white",
       }}
     >
-      {lines.map((line, i) => {
+      {visible.map((line, i) => {
         const important =
           line.includes("strike") ||
           line.includes("discard") ||
