@@ -19,9 +19,26 @@ export default function GameView({ engine }: { engine: GameEngine }) {
 
   const isFinished = snapshot.finished;
 
+  const restartGame = () => {
+  engine.setup(JSON.parse(JSON.stringify(engine.players)));
+  };
+
   return (
     <div style={{ padding: 12 }}>
       <h2>Hanabi</h2>
+
+      <button
+        onClick={restartGame}
+        style={{
+          padding: "6px 10px",
+          marginBottom: 12,
+          borderRadius: 6,
+          background: "#444",
+          cursor: "pointer",
+        }}
+      >
+        Restart Game
+      </button>
 
       {isFinished && (
         <div
