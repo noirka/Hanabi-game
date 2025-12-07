@@ -56,12 +56,15 @@ export default function GameView({ engine }: { engine: GameEngine }) {
           {snapshot.players.map((p) => (
             <div
               key={p.id}
-              style={{
-                marginBottom: 16,
-                padding: 8,
-                background: "#1f1f1f",
-                borderRadius: 6,
-              }}
+             style={{
+              marginBottom: 16,
+              padding: 8,
+              background: "#1f1f1f",
+              borderRadius: 6,
+              border: p.id === current.id ? "2px solid #ffcf00" : "2px solid transparent",
+              boxShadow: p.id === current.id ? "0 0 8px #ffcf00aa" : "none",
+            }}
+
             >
               <HandView
                 player={p}
