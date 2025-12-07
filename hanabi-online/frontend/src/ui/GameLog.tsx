@@ -1,14 +1,34 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+
+function prettify(line: string): string {
+  if (line.includes("Bot thinking:")) return "";
+  
+  if (line.includes("bot_play")) {
+    const { card } = JSON.parse(line.split("bot_play:")[1]);
+    return `Bot played: ${card.color} ${card.rank}`;
+  }
+  if (line.includes("bot_discard")) {
+    const { card } = JSON.parse(line.split("bot_discard:")[1]);
+    return `Bot discarded: ${card.color} ${card.rank}`;
+  }
+  if (line.includes("bot_hint")) {
+    const { target, color, rank } = JSON.parse(
+      line.split("bot_hint:")[1]
+    );
+    return `Bot hinted ${color ?? rank} to ${target}`;
+  }
+
+  return line;
+}
 
 export function GameLog({ lines }: { lines: string[] }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-
   const visible = lines.slice(-100).reverse();
 
   useEffect(() => {
     const div = containerRef.current;
     if (!div) return;
-    div.scrollTop = 0; 
+    div.scrollTop = 0;
   }, [lines]);
 
   return (
@@ -26,11 +46,14 @@ export function GameLog({ lines }: { lines: string[] }) {
       }}
     >
       {visible.map((line, i) => {
+        const text = prettify(line);
+        if (!text) return null;
+        
         const important =
-          line.includes("strike") ||
-          line.includes("discard") ||
-          line.includes("finished") ||
-          line.includes("Perfect");
+          text.includes("strike") ||
+          text.includes("discard") ||
+          text.includes("finished") ||
+          text.includes("Perfect");
 
         return (
           <div
@@ -40,7 +63,7 @@ export function GameLog({ lines }: { lines: string[] }) {
               color: important ? "#ff5252" : "#ddd",
             }}
           >
-            {line}
+            {text}
           </div>
         );
       })}

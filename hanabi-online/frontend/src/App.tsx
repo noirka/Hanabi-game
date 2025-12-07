@@ -1,16 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GameView from "./ui/GameView";
 import { GameEngine } from "./game/engine";
 
 export default function App() {
-  const [engine] = useState(() => {
-    const eng = new GameEngine();
-    eng.setup([
-      { id: "p1", name: "Player", hand: [], knownInfo: [] },
-      { id: "b1", name: "Bot", isBot: true, hand: [], knownInfo: [] },
-    ]);
-    return eng;
-  });
+  const [engine, setEngine] = useState<GameEngine | null>(null);
+
+  useEffect(() => {
+    document.body.style.background = "#121212";  
+    document.body.style.color = "white";
+  }, []);
+
+  useEffect(() => {
+    setTimeout(() => {
+      const eng = new GameEngine();
+      eng.setup([
+        { id: "p1", name: "Player", hand: [], knownInfo: [] },
+        { id: "b1", name: "Bot", isBot: true, hand: [], knownInfo: [] }
+      ]);
+      setEngine(eng);
+    }, 0);
+  }, []);
+
+  if (!engine) return <>Loading game...</>;
 
   return <GameView engine={engine} />;
 }

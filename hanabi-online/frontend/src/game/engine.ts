@@ -21,12 +21,15 @@ export class GameEngine {
   currentPlayerIndex = 0;
   finished = false;
 
+  // єдиний лічильник для фінального раунду
   finalTurnsRemaining: number | null = null;
 
   listeners: Array<() => void> = [];
   logLines: string[] = [];
 
   constructor() {}
+
+  // ---------------- SNAPSHOT ----------------
 
   snapshot(): GameSnapshot {
     return {
@@ -42,17 +45,20 @@ export class GameEngine {
     };
   }
 
-    debugBotMove(botId: string) {
-    const bot = this.players.find((p) => p.id === botId && p.isBot);
-    if (!bot) return null;
+  debugBotMove(botId: string) {
+  const bot = this.players.find((p) => p.id === botId && p.isBot);
+  if (!bot) return null;
 
-    try {
-      const move = decideMove(this, bot);
-      return move;
-    } catch {
-      return null;
-    }
+  try {
+    const move = decideMove(this, bot);
+    return move;
+  } catch {
+    return null;
   }
+}
+
+
+  // ---------------- HELPERS ----------------
 
   private validateMove(move: Move) {
     const player = this.players[this.currentPlayerIndex];
@@ -122,7 +128,7 @@ export class GameEngine {
     if (this.finished) {
   this.log("Move ignored — game already finished");
   return;
-  }
+}
 
     this.validateMove(move);
 
@@ -131,7 +137,7 @@ export class GameEngine {
     if (move.type === "play") {
       if (move.cardIndex < 0 || move.cardIndex >= player.hand.length) {
   throw new Error("Invalid cardIndex in play");
-  }
+}
 
       const card = player.hand[move.cardIndex];
       if (!card) throw new Error("Invalid card index");
@@ -166,14 +172,14 @@ export class GameEngine {
 
       this.advanceTurn();
       this.emitChange();
-      await this.startNextIfBot();
+      await this.startNextIfBot(); 
       return;
     }
 
     if (move.type === "discard") {
       if (move.cardIndex < 0 || move.cardIndex >= player.hand.length) {
   throw new Error("Invalid cardIndex in discard");
-  }
+}
 
       const card = player.hand[move.cardIndex];
       if (!card) throw new Error("Invalid card index for discard");
@@ -195,13 +201,17 @@ export class GameEngine {
 
       this.advanceTurn();
       this.emitChange();
-      await this.startNextIfBot();
+      await this.startNextIfBot(); 
       return;
     }
 
     if (move.type === "hint") {
       const giver = this.players[this.currentPlayerIndex];
       const target = this.players.find(p => p.id === move.targetId);
+      if (!target) {
+  throw new Error("Hint target does not exist");
+}
+
       if (!target) throw new Error("Invalid targetId");
       if (giver.id === target.id) throw new Error("Player cannot hint themselves");
       if (this.hints <= 0) throw new Error("No hint tokens left");
@@ -231,7 +241,7 @@ export class GameEngine {
 
       this.advanceTurn();
       this.emitChange();
-      await this.startNextIfBot();
+      await this.startNextIfBot(); 
       return;
     }
   }
@@ -255,15 +265,15 @@ async performBotMove(botId: string): Promise<void> {
   } catch (err) {
     this.log(`Bot ${bot.name} error: ${String(err)}`);
   }
-  }
+}
 
-  private async startNextIfBot() {
+
+private async startNextIfBot() {
   const current = this.players[this.currentPlayerIndex];
   if (!current || !current.isBot) return;
 
   await this.performBotMove(current.id);
 }
-
 
   setup(players: Player[]) {
     this.players = players;
