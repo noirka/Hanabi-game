@@ -6,7 +6,7 @@ export function GameLog({ lines }: { lines: string[] }) {
   useEffect(() => {
     const div = containerRef.current;
     if (!div) return;
-    div.scrollTop = div.scrollHeight;
+    div.scrollTop = div.scrollHeight; 
   }, [lines]);
 
   return (
