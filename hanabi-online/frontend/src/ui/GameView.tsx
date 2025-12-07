@@ -121,6 +121,20 @@ export default function GameView({ engine }: { engine: GameEngine }) {
           <div style={{ marginTop: 16 }}>
             <GameLog lines={engine.getLog()} />
           </div>
+          {(current.isBot && !isFinished) && (
+            <div style={{
+              marginTop: 12,
+              padding: 8,
+              background: "#222",
+              borderRadius: 6,
+              color: "#ccc",
+              fontSize: 12
+            }}>
+              <b>DEBUG — Bot thinking:</b>
+              <br />
+              {JSON.stringify(engine.debugBotMove(current.id))}
+            </div>
+          )}
         </aside>
       </section>
     </div>

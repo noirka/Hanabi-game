@@ -42,6 +42,18 @@ export class GameEngine {
     };
   }
 
+    debugBotMove(botId: string) {
+    const bot = this.players.find((p) => p.id === botId && p.isBot);
+    if (!bot) return null;
+
+    try {
+      const move = decideMove(this, bot);
+      return move;
+    } catch {
+      return null;
+    }
+  }
+
   private validateMove(move: Move) {
     const player = this.players[this.currentPlayerIndex];
     if (!player) throw new Error("No current player");
