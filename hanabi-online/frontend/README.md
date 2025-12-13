@@ -1,73 +1,95 @@
-# React + TypeScript + Vite
+# Hanabi Online: Кооперативна Карткова Гра Проти AI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Hanabi Online** — це веб-реалізація популярної кооперативної карткової гри Hanabi, де гравець співпрацює з комп'ютерними опонентами (AI-ботами), щоб створити ідеальний феєрверк.
 
-Currently, two official plugins are available:
+## Огляд Проєкту
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Мета проєкту — надати інтерактивну онлайн-версію Hanabi, доступну через браузер, з надійною серверною логікою та режимом гри проти AI.
 
-## React Compiler
+### Ключові Особливості (Goals)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Повний ігровий цикл Hanabi:** реалізовані всі правила, включаючи механіки підказок, викладання, скидання карт та підрахунок очок.
+- **Режим AI-симуляції:** гра в режимі одного гравця проти 1–4 AI-ботів (симуляція 2–5 гравців).
+- **Правила гри:** повноцінний механізм підказок та контроль кількості помилок.
+- **Інтерфейс:** UI, що відображає карти інших гравців (AI-ботів), але приховує власні (як у реальній грі).
+- **AI Опонент:** використовується простий rule-based агент, який пам'ятає підказки, пріоритетно викладає карти та скидає безпечні карти.
 
-## Expanding the ESLint configuration
+### Не входить у Область Роботи (Non-goals)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Мультиплеєр у реальному часі (гра між кількома користувачами).
+- Реєстрація/вхід користувачів.
+- Лобі для створення або приєднання до ігор.
+- Мобільний додаток.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Технологічний Стек та Архітектура
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Проєкт реалізовано з використанням архітектури "клієнт-сервер" для логіки гри.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Компонент                       | Технологія                                                                             | Призначення                                                                       |
+| :------------------------------ | :------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- |
+| **Frontend** (Client)           | React + Vite + TypeScript + Tailwind CSS                                               | Відповідає за відображення гри, дії користувача та взаємодію з логікою.           |
+| **Backend/Game Logic** (Server) | Node.js (Express)                                                                      | Керує логікою гри, валідацією ходів, синхронізацією стану та генерацією ходів AI. |
+| **Realtime**                    | Socket.io (Використовується для тестування, але не вказано як основний стек у дизайні) | Забезпечення інтеграції та тестування асинхронних подій.                          |
+| **Database**                    | Не використовується                                                                    | Дані сесії зберігаються in-memory.                                                |
+
+## Встановлення та Запуск
+
+### Передумови
+
+- Node.js (рекомендована версія)
+- npm
+
+### 1. Клонування репозиторію
+
+```bash
+git clone <https://github.com/noirka/Hanabi-game.git>
+cd hanabi-online
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2\. Встановлення залежностей
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Проєкт має окремі директорії для фронтенду та бекенду.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Встановлення залежностей для Frontend
+cd frontend
+npm install
+cd ..
+
+# Встановлення залежностей для Backend
+cd backend
+npm install
+cd ..
+```
+
+### 3\. Запуск
+
+Запускайте фронтенд та бекенд окремо:
+
+```bash
+# Запуск Backend (Сервер ігровій логіки)
+cd backend
+npm start
+# Сервер зазвичай запускається на http://localhost:3000
+
+# Запуск Frontend
+cd ../frontend
+npm run dev
+# Додаток зазвичай доступний на http://localhost:5173
+```
+
+## Тестування
+
+Проєкт включає повну стратегію тестування для забезпечення надійності ігрової логіки та взаємодії.
+
+### Виконання Тестів
+
+```bash
+cd backend
+npm test
+```
+
+```bash
+cd backend
+ts-node src/game/run_simulation.ts
 ```
