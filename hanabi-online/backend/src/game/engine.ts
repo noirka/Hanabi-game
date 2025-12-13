@@ -79,7 +79,10 @@ export class GameEngine {
     private validateMove(move: Move) {
         const player = this.players[this.currentPlayerIndex];
         if (!player) throw new Error("No current player");
-        if (move.playerId !== player.id) throw new Error("It's not this player's turn");
+        
+        if (move.playerId !== player.id) {
+            throw new Error("It's not this player's turn");
+        }
     }
 
     private canPlay(card: { color: Color; rank: Rank }): boolean {
@@ -140,7 +143,7 @@ export class GameEngine {
         return false;
     }
 
-    private async startNextTurnLogic() {
+    private startNextTurnLogic() {
         if (this.checkGameOverCommon()) {
             this.emitChange();
             return;
@@ -153,7 +156,7 @@ export class GameEngine {
         this.advanceTurn();
         this.emitChange();
 
-        await this.startNextIfBot();
+        this.startNextIfBot();
     }
 
 
@@ -194,12 +197,6 @@ export class GameEngine {
                 this.discard.push(card);
                 this.strikes++; 
                 this.log(`${player.name} failed play ${card.color} ${card.rank} — strike ${this.strikes}`);
-                
-                if (this.strikes >= this.MAX_STRIKES) {
-                    this.checkGameOverCommon(); 
-                    this.emitChange();
-                    return; 
-                }
             }
 
             player.hand.splice(move.cardIndex, 1);
@@ -269,33 +266,39 @@ export class GameEngine {
         }
     }
 
-    async performBotMove(botId: string): Promise<void> {
+    performBotMove(botId: string): void {
         const bot = this.players.find((p) => p.id === botId && p.isBot);
         if (!bot) return;
 
-        try {
-            if (process.env.NODE_ENV !== 'test') { 
-                await new Promise((res) => setTimeout(res, 350)); 
+        const performMoveAction = () => {
+            try {
+                if (this.players[this.currentPlayerIndex].id !== botId) return;
+
+                const move = decideMove(this, bot);
+
+                this.performMove(move);
+
+            } catch (err) {
+                this.log(`Bot ${bot.name} error: ${String(err)}`);
+                this.startNextTurnLogic();
             }
+        };
 
-            if (this.players[this.currentPlayerIndex].id !== botId) return;
-
-            const move = decideMove(this, bot);
-
-            this.performMove(move);
-
-        } catch (err) {
-            this.log(`Bot ${bot.name} error: ${String(err)}`);
-            this.startNextTurnLogic();
-        }
+        new Promise<void>((res) => {
+            const delay = process.env.NODE_ENV === 'test' ? 10 : 350; 
+            setTimeout(() => {
+                performMoveAction();
+                res();
+            }, delay);
+        });
     }
 
 
-    private async startNextIfBot() {
+    private startNextIfBot() {
         const current = this.players[this.currentPlayerIndex];
         if (!current || !current.isBot) return;
 
-        await this.performBotMove(current.id);
+        this.performBotMove(current.id);
     }
 
     public setup(players: Player[]) {
@@ -331,7 +334,6 @@ export class GameEngine {
     log(msg: string) {
         const line = `[Turn ${this.turn}] ${msg}`;
         this.logLines.push(line);
-        //console.log(line);
     }
 
     getLog() {
