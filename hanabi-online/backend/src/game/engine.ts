@@ -192,8 +192,14 @@ export class GameEngine {
                 }
             } else {
                 this.discard.push(card);
-                this.strikes++;
+                this.strikes++; 
                 this.log(`${player.name} failed play ${card.color} ${card.rank} — strike ${this.strikes}`);
+                
+                if (this.strikes >= this.MAX_STRIKES) {
+                    this.checkGameOverCommon(); 
+                    this.emitChange();
+                    return; 
+                }
             }
 
             player.hand.splice(move.cardIndex, 1);
@@ -268,7 +274,9 @@ export class GameEngine {
         if (!bot) return;
 
         try {
-            await new Promise((res) => setTimeout(res, 350));
+            if (process.env.NODE_ENV !== 'test') { 
+                await new Promise((res) => setTimeout(res, 350)); 
+            }
 
             if (this.players[this.currentPlayerIndex].id !== botId) return;
 
@@ -276,9 +284,6 @@ export class GameEngine {
 
             this.performMove(move);
 
-            if (this.finished) {
-                this.log(`Game finished after bot move.`);
-            }
         } catch (err) {
             this.log(`Bot ${bot.name} error: ${String(err)}`);
             this.startNextTurnLogic();
@@ -326,7 +331,7 @@ export class GameEngine {
     log(msg: string) {
         const line = `[Turn ${this.turn}] ${msg}`;
         this.logLines.push(line);
-        console.log(line);
+        //console.log(line);
     }
 
     getLog() {
