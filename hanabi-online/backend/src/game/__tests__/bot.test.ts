@@ -70,7 +70,7 @@ describe('Bot Logic Testing (Priorities)', () => {
         expect(move.playerId).toBe(botId);
     });
 
-   test('P2: Bot should give a HINT when another player holds the next playable card, and bot has no certain play', () => {
+    test('P2: Bot should give a HINT when another player holds the next playable card, and bot has no certain play', () => {
         const botId = 'bot-1';
         const targetId = 'player-2';
         
@@ -113,5 +113,78 @@ describe('Bot Logic Testing (Priorities)', () => {
         expect(hintMove.targetId).toBe(targetId);
         expect(hintMove.hint).toEqual({ color: 'red' }); 
         expect(hintMove.playerId).toBe(botId);
+    });
+    
+    test('P3: Bot should DISCARD the first card (Index 0) when no play or hint is possible', () => {
+        const botId = 'bot-1';
+        const targetId = 'player-2';
+        
+        const targetHand: Card[] = [
+            { id: 'r2', color: 'red', rank: 2 }, 
+            { id: 'b2', color: 'blue', rank: 2 },
+        ];
+        
+        const botHand: Card[] = [
+            { id: 'w1', color: 'white', rank: 1 }, 
+            { id: 'g3', color: 'green', rank: 3 },
+        ];
+
+        const fireworks: Record<Color, number> = { 
+            red: 0, blue: 0, green: 0, yellow: 0, white: 0 
+        } as Record<Color, number>;
+
+        const botKnownInfo: KnownInfo[] = [{}, {}];
+        
+        const players: Player[] = [
+            { id: botId, name: 'Bot', isBot: true, hand: botHand, knownInfo: botKnownInfo },
+            { id: targetId, name: 'Player 2', isBot: false, hand: targetHand, knownInfo: [] },
+        ];
+
+        const snapshot: GameSnapshot = createMockGameSnapshot(fireworks, players);
+        snapshot.hints = 0; 
+
+        const mockEngine = new MockGameEngine(snapshot);
+        const botPlayer = snapshot.players[0]; 
+
+        const move: Move = decideMove(mockEngine, botPlayer);
+
+        expect(move.type).toBe("discard");
+        expect(move.cardIndex).toBe(0);
+        expect(move.playerId).toBe(botId);
+    });
+
+   test('P3.1: Bot must NOT discard a card that has known information (must discard unknown card at Index 1)', () => {
+        const botId = 'bot-1';
+        
+        const botHand: Card[] = [
+            { id: 'w1', color: 'white', rank: 1 }, 
+            { id: 'g3', color: 'green', rank: 3 }, 
+        ];
+
+        const fireworks: Record<Color, number> = { 
+            red: 0, blue: 0, green: 0, yellow: 0, white: 0 
+        } as Record<Color, number>;
+
+        const knownInfo: KnownInfo[] = [
+            { color: 'white', rank: undefined }, 
+            {}, 
+        ];
+        
+        const players: Player[] = [
+            { id: botId, name: 'Bot', isBot: true, hand: botHand, knownInfo: knownInfo },
+            { id: 'player-2', name: 'Player 2', isBot: false, hand: [], knownInfo: [] },
+        ];
+
+        const snapshot = createMockGameSnapshot(fireworks, players);
+        snapshot.hints = 0; 
+
+        const mockEngine = new MockGameEngine(snapshot);
+        const botPlayer = snapshot.players[0]; 
+
+        const move: Move = decideMove(mockEngine, botPlayer);
+
+        expect(move.type).toBe("discard"); 
+        expect(move.cardIndex).toBe(1); 
+        expect(move.playerId).toBe(botId);
     });
 });

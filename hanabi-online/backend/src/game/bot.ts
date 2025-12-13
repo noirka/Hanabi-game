@@ -34,9 +34,23 @@ export function decideMove(engine: GameEngine, player: Player): Move {
         }
     }
 
+    let discardIndex = -1;
+    for (let i = 0; i < player.hand.length; i++) {
+        const info = player.knownInfo[i];
+        
+        if (!info.color && !info.rank) {
+            discardIndex = i;
+            break; 
+        }
+    }
+
+    if (discardIndex !== -1) {
+        return { type: "discard", playerId: player.id, cardIndex: discardIndex };
+    }
+
     if (player.hand.length > 0) {
         return { type: "discard", playerId: player.id, cardIndex: 0 };
     }
-
+    
     return { type: "discard", playerId: player.id, cardIndex: 0 };
 }
