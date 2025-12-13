@@ -1,38 +1,66 @@
-import type { Player } from "../game/types";
-import { CardView } from "./CardView";
+import React from 'react';
+import CardView from "./CardView"; 
+import { type Card, type Player, type KnownInfo } from '../types';
 
-export function HandView({
-  player,
-  isMe,
-  onPlay,
-  onDiscard
-}: {
-  player: Player;
-  isMe?: boolean;
-  onPlay?: (i: number) => void;
-  onDiscard?: (i: number) => void;
-}) {
-  return (
-    <div>
-      <div style={{ marginBottom: 6, fontWeight: 700 }}>{player.name} {player.isBot ? "(bot)" : ""}</div>
-      <div style={{ display: "flex", gap: 8 }}>
-        {player.hand.map((c, i) => (
-          <div key={c.id} style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
-            <CardView card={isMe ? { ...c } : c} hidden={!isMe ? false : false /* you can hide own cards visually if desired */} />
-            {isMe && (
-              <div style={{ display: "flex", gap: 4 }}>
-                <button onClick={() => onPlay && onPlay(i)}>Play</button>
-                <button onClick={() => onDiscard && onDiscard(i)}>Discard</button>
-              </div>
-            )}
-            {isMe && (
-              <div style={{ fontSize: 11 }}>
-                <div>Known: color: {player.knownInfo[i]?.color ?? "?"} rank: {player.knownInfo[i]?.rank ?? "?"}</div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+interface HandViewProps {
+    player: Player;
+    isMe: boolean;
+    onPlay?: (cardIndex: number) => void;
+    onDiscard?: (cardIndex: number) => void;
+    isMyTurn: boolean; 
 }
+
+export const HandView: React.FC<HandViewProps> = ({ player, isMe, onPlay, onDiscard, isMyTurn }) => {
+    
+    const showControls = isMe && isMyTurn && !!onPlay && !!onDiscard;
+
+    const containerStyle: React.CSSProperties = isMe 
+        ? { 
+            padding: 10, 
+            background: '#222',
+          }
+        : { 
+            padding: 10, 
+            borderRadius: 8, 
+            background: '#222',
+            marginBottom: 15,
+            border: isMyTurn ? '3px solid gold' : '1px solid #444',
+            boxShadow: isMyTurn ? '0 0 10px #ffcc00' : 'none',
+            transition: 'all 0.3s ease',
+          };
+
+    const titleStyle: React.CSSProperties = {
+        marginBottom: 10, 
+        fontSize: 16, 
+        color: isMyTurn ? 'lime' : '#f0f0f0',
+        fontWeight: isMyTurn ? 'bold' : 'normal',
+    };
+
+    return (
+        <div style={containerStyle}>
+            <h3 style={titleStyle}>
+                {player.name} {isMe && "(You)"} {player.isBot && "(Bot)"} 
+                {isMyTurn && <span style={{fontSize: 12, color: 'lime', marginLeft: 10}}>(ХІД)</span>}
+            </h3>
+            
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {player.hand.map((card: Card, index: number) => {
+                    const knownInfo: KnownInfo = player.knownInfo[index];
+                    
+                    return (
+                        <CardView
+                            key={card.id}
+                            card={isMe ? undefined : card}
+                            knownInfo={isMe ? knownInfo : undefined}
+                            isMyCard={isMe} 
+                            
+                            onPlay={showControls ? () => onPlay!(index) : undefined}
+                            onDiscard={showControls ? () => onDiscard!(index) : undefined}
+                            showActions={showControls} 
+                        />
+                    );
+                })}
+            </div>
+        </div>
+    );
+};

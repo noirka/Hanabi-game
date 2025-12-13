@@ -1,85 +1,138 @@
-import type { GameEngine } from "../game/engine";
-import type { Player, Color } from "../game/types";
+import React, { useState } from 'react';
+import { type Player, type Move, type Color, type Rank, type HintValue } from '../types';
 
-export function GameControls({ engine, player }: { engine: GameEngine; player: Player }) {
-
-  const play = (i: number) =>
-    engine.performMove({ type: "play", playerId: player.id, cardIndex: i });
-
-  const discard = (i: number) =>
-    engine.performMove({ type: "discard", playerId: player.id, cardIndex: i });
-
-  const hintColor = (targetId: string, color: Color) =>
-    engine.performMove({
-      type: "hint",
-      playerId: player.id,
-      targetId,
-      hint: { color }
-    });
-
-  const opponents = engine.players.filter(p => p.id !== player.id);
-
-  return (
-    <div style={{
-      marginTop: 8,
-      padding: 8,
-      background: "#242424",
-      borderRadius: 6
-    }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-
-        <div style={{ display: "flex", gap: 6 }}>
-          <button style={btn} onClick={() => play(0)}>🎆 Play</button>
-          <button style={btnDanger} onClick={() => discard(0)}>🗑 Discard</button>
-        </div>
-
-        <div style={{ fontSize: 11, opacity: 0.7 }}>
-          Give hint to:
-        </div>
-
-        {opponents.map((p) => (
-          <div key={p.id} style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-            {(["red", "blue", "green", "yellow", "white"] as Color[]).map((c) => (
-              <button
-                key={c}
-                onClick={() => hintColor(p.id, c)}
-                style={{
-                  ...btnSmall,
-                  background: c,
-                  color: c === "yellow" ? "#222" : "white"
-                }}
-              >
-                {c}
-              </button>
-            ))}
-            <div style={{ fontSize: 12, color: "#aaa" }}>→ {p.name}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+interface GameControlsProps {
+    players: Player[];
+    currentPlayer: Player;
+    hints: number;
+    onPerformMove: (move: Move) => void;
 }
 
-const btn: React.CSSProperties = {
-  padding: "6px 10px",
-  background: "#444",
-  border: "1px solid #666",
-  borderRadius: 4,
-  cursor: "pointer",
-  fontWeight: 600,
+const COLOR_MAP: Record<Color, { bg: string, text: string }> = {
+    red: { bg: '#f87171', text: '#450a0a' },
+    blue: { bg: '#60a5fa', text: '#1e3a8a' },
+    green: { bg: '#4ade80', text: '#064e3b' },
+    yellow: { bg: '#facc15', text: '#78350f' },
+    white: { bg: '#e5e7eb', text: '#374151' },
 };
 
-const btnDanger: React.CSSProperties = {
-  ...btn,
-  background: "#661a1a",
-  border: "1px solid #aa0000"
-};
+const ALL_RANKS: Rank[] = [1, 2, 3, 4, 5];
+const ALL_COLORS: Color[] = ['red', 'blue', 'green', 'yellow', 'white'];
 
-const btnSmall: React.CSSProperties = {
-  padding: "3px 6px",
-  borderRadius: 4,
-  cursor: "pointer",
-  border: "none",
-  fontWeight: 700,
-  fontSize: 11
+export const GameControls: React.FC<GameControlsProps> = ({ players, currentPlayer, hints, onPerformMove }) => {
+    const [targetPlayerId, setTargetPlayerId] = useState<string>('');
+    const [hintType, setHintType] = useState<'color' | 'rank' | null>(null);
+
+    const isHintValid = targetPlayerId && hintType && hints > 0;
+
+    const handleHint = (value: Color | Rank) => {
+        if (!isHintValid) return;
+
+        const hintPayload: HintValue = hintType === 'color' 
+            ? { color: value as Color } 
+            : { rank: value as Rank };
+        
+        const move: Move = {
+            type: 'hint',
+            playerId: currentPlayer.id,
+            targetId: targetPlayerId,
+            hint: hintPayload,
+        };
+
+        onPerformMove(move);
+        setTargetPlayerId('');
+        setHintType(null);
+    };
+
+    const isTargetReady = targetPlayerId !== '';
+
+    return (
+        <div style={{ borderTop: '1px dashed #333', marginTop: 15, paddingTop: 15 }}>
+            <h4 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Give a Hint (Hints Left: {hints})</h4>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                <select
+                    onChange={(e) => setTargetPlayerId(e.target.value)}
+                    value={targetPlayerId}
+                    style={{ padding: 8, borderRadius: 4, background: '#333', color: '#fff', border: 'none' }}
+                >
+                    <option value="">-- Choose Target Player --</option>
+                    {players
+                        .filter(p => p.id !== currentPlayer.id)
+                        .map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                </select>
+
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                    <button
+                        onClick={() => setHintType('color')}
+                        disabled={!isTargetReady || hints === 0}
+                        style={{ padding: '8px 15px', background: hintType === 'color' ? '#5a67d8' : '#444', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: isTargetReady ? 1 : 0.5 }}
+                    >
+                        Color Hint
+                    </button>
+                    <button
+                        onClick={() => setHintType('rank')}
+                        disabled={!isTargetReady || hints === 0}
+                        style={{ padding: '8px 15px', background: hintType === 'rank' ? '#5a67d8' : '#444', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: isTargetReady ? 1 : 0.5 }}
+                    >
+                        Rank Hint
+                    </button>
+                </div>
+
+                {(hintType === 'color' && isTargetReady) && (
+                    <div style={{ display: 'flex', gap: 5, marginTop: 5, flexWrap: 'wrap' }}>
+                        {ALL_COLORS.map(color => {
+                            const styles = COLOR_MAP[color];
+                            return (
+                                <button
+                                    key={color}
+                                    onClick={() => handleHint(color)}
+                                    disabled={!isHintValid}
+                                    style={{
+                                        padding: '5px 10px',
+                                        background: styles.bg,
+                                        color: styles.text,
+                                        border: 'none',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: 12,
+                                        opacity: isHintValid ? 1 : 0.5
+                                    }}
+                                >
+                                    {color.charAt(0).toUpperCase()}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {(hintType === 'rank' && isTargetReady) && (
+                    <div style={{ display: 'flex', gap: 5, marginTop: 5 }}>
+                        {ALL_RANKS.map(rank => (
+                            <button
+                                key={rank}
+                                onClick={() => handleHint(rank)}
+                                disabled={!isHintValid}
+                                style={{
+                                    padding: '5px 10px',
+                                    background: '#2d3748',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: 4,
+                                    cursor: 'pointer',
+                                    fontSize: 12,
+                                    opacity: isHintValid ? 1 : 0.5
+                                }}
+                            >
+                                {rank}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 };
