@@ -2,26 +2,30 @@
   "name": "hanabi-backend",
   "version": "1.0.0",
   "main": "dist/server.js",
- "scripts": {
+  "scripts": {
     "build": "tsc",
     "dev": "nodemon -e ts,json --exec \"ts-node -r tsconfig-paths/register src/server.ts\"",
     "start": "node dist/server.js",
-    "test": "jest" 
+    "test": "jest"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "socket.io": "^4.8.1",
-    "uuid": "^13.0.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
+    "@types/socket.io-client": "^1.4.36",
+    "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
     "jest": "^30.2.0",
     "nodemon": "^3.1.0",
+    "socket.io-client": "^4.8.1",
+    "supertest": "^7.1.4",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",

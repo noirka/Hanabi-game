@@ -68,6 +68,7 @@ io.on('connection', (socket: Socket) => {
 
         try {
             game.performMove(playerMove); 
+            broadcastGameState(game, io);
         } catch (error: any) {
             socket.emit('moveError', error.message || 'Invalid move attempt.');
         }
@@ -111,6 +112,10 @@ app.get("/", (_req, res) => {
     res.send("Hanabi AI backend is running (Socket.IO mode)");
 });
 
-httpServer.listen(PORT, () => {
-    console.log(`Backend listening on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    httpServer.listen(PORT, () => {
+        console.log(`Backend listening on http://localhost:${PORT}`);
+    });
+}
+
+export { httpServer, activeGames, io };
