@@ -1,9 +1,10 @@
 import { decideMove } from '../bot';
-import { GameSnapshot, Card, KnownInfo, Move, Color, Rank } from '../types';
+import { GameSnapshot, Card, KnownInfo, Move, Color, Rank, Player } from '../types';
 import { GameEngine } from '../engine'; 
 
 class MockGameEngine extends GameEngine {
     private mockSnapshot: GameSnapshot;
+
     constructor(snapshot: GameSnapshot) {
         super(); 
         this.mockSnapshot = snapshot;
@@ -18,13 +19,9 @@ describe('Bot Logic Testing (Priorities)', () => {
 
     const createMockGameSnapshot = (
         fireworks: Record<Color, number>, 
-        botHand: Card[],
-        knownInfo: KnownInfo[]
+        players: Player[]
     ): GameSnapshot => ({
-        players: [
-            { id: 'bot-1', name: 'Bot', isBot: true, hand: botHand, knownInfo: knownInfo },
-            { id: 'player-2', name: 'Player 2', isBot: false, hand: [], knownInfo: [] },
-        ],
+        players: players,
         discard: [],
         fireworks,
         deckCount: 40,
@@ -37,36 +34,84 @@ describe('Bot Logic Testing (Priorities)', () => {
     });
 
     test('P1: Bot should play a card when it is 100% certain it is the next playable card', () => {
+        const botId = 'bot-1';
+        
         const cardToPlay: Card = { id: 'r1', color: 'red', rank: 1 };
         
         const botHand: Card[] = [
             cardToPlay, 
-            { id: 'b3', color: 'blue', rank: 3, },
+            { id: 'b3', color: 'blue', rank: 3 },
             { id: 'y2', color: 'yellow', rank: 2 },
         ];
         
         const fireworks: Record<Color, number> = { 
-            red: 0, 
-            blue: 0, 
-            green: 0, 
-            yellow: 0, 
-            white: 0 
-        } as Record<Color, number>; 
+            red: 0, blue: 0, green: 0, yellow: 0, white: 0 
+        } as Record<Color, number>;
+
         const knownInfo: KnownInfo[] = [
             { color: 'red', rank: 1 }, 
             {},
             {},
         ];
         
-        const snapshot = createMockGameSnapshot(fireworks, botHand, knownInfo);
-        const mockEngine = new MockGameEngine(snapshot); 
-        
+        const players: Player[] = [
+            { id: botId, name: 'Bot', isBot: true, hand: botHand, knownInfo: knownInfo },
+            { id: 'player-2', name: 'Player 2', isBot: false, hand: [], knownInfo: [] },
+        ];
+
+        const snapshot = createMockGameSnapshot(fireworks, players);
+        const mockEngine = new MockGameEngine(snapshot);
         const botPlayer = snapshot.players[0]; 
 
         const move: Move = decideMove(mockEngine, botPlayer);
 
         expect(move.type).toBe("play");
         expect(move.cardIndex).toBe(0);
-        expect(move.playerId).toBe(botPlayer.id);
+        expect(move.playerId).toBe(botId);
+    });
+
+   test('P2: Bot should give a HINT when another player holds the next playable card, and bot has no certain play', () => {
+        const botId = 'bot-1';
+        const targetId = 'player-2';
+        
+        const targetPlayableCard: Card = { id: 'r1', color: 'red', rank: 1 };
+        
+        const targetHand: Card[] = [
+            targetPlayableCard, 
+            { id: 'b3', color: 'blue', rank: 3 },
+            { id: 'y2', color: 'yellow', rank: 2 },
+        ];
+        
+        const botHand: Card[] = [
+            { id: 'w1', color: 'white', rank: 1 }, 
+            { id: 'g3', color: 'green', rank: 3 },
+        ];
+
+        const fireworks: Record<Color, number> = { 
+            red: 0, blue: 0, green: 0, yellow: 0, white: 0 
+        } as Record<Color, number>;
+
+        const botKnownInfo: KnownInfo[] = [{}, {}];
+        
+        const players: Player[] = [
+            { id: botId, name: 'Bot', isBot: true, hand: botHand, knownInfo: botKnownInfo },
+            { id: targetId, name: 'Player 2', isBot: false, hand: targetHand, knownInfo: [] },
+        ];
+
+        const snapshot: GameSnapshot = createMockGameSnapshot(fireworks, players);
+        snapshot.hints = 1; 
+
+        const mockEngine = new MockGameEngine(snapshot);
+        const botPlayer = snapshot.players[0]; 
+
+        const move: Move = decideMove(mockEngine, botPlayer);
+
+        expect(move.type).toBe("hint");
+
+        const hintMove = move as { type: "hint"; targetId: string; hint: { color?: Color; rank?: Rank }; playerId: string };
+
+        expect(hintMove.targetId).toBe(targetId);
+        expect(hintMove.hint).toEqual({ color: 'red' }); 
+        expect(hintMove.playerId).toBe(botId);
     });
 });
