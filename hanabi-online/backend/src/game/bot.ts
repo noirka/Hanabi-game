@@ -12,19 +12,15 @@ export function decideMove(engine: GameEngine, player: Player): Move {
     for (let i = 0; i < player.hand.length; i++) {
         const info = player.knownInfo[i];
         
-        if (info.color && info.rank) {
+        if (info.color) {
             const requiredRank = snapshot.fireworks[info.color] + 1;
             
-            if (info.rank === requiredRank) {
+            if (info.rank && info.rank === requiredRank) {
                 return { type: "play", playerId: player.id, cardIndex: i };
             }
-        }
-        
-        if (info.color) {
-            const currentFireworkRank = snapshot.fireworks[info.color];
             
-            if (currentFireworkRank === 4) {
-                return { type: "play", playerId: player.id, cardIndex: i };
+            if (requiredRank === 5) {
+                 return { type: "play", playerId: player.id, cardIndex: i };
             }
         }
     }
@@ -48,7 +44,24 @@ export function decideMove(engine: GameEngine, player: Player): Move {
             for (let i = 0; i < target.hand.length; i++) {
                 const c = target.hand[i];
                 if (isCardPlayableFromSnapshot(snapshot, c)) {
-                    return { type: "hint", playerId: player.id, targetId: target.id, hint: { color: c.color } };
+                    
+                    if (c.rank >= 1 && c.rank <= 4) {
+                        return { 
+                            type: "hint", 
+                            playerId: player.id, 
+                            targetId: target.id, 
+                            hint: { color: c.color, rank: c.rank } 
+                        };
+                    }
+                    
+                    if (c.rank === 5) {
+                        return { 
+                            type: "hint", 
+                            playerId: player.id, 
+                            targetId: target.id, 
+                            hint: { color: c.color } 
+                        };
+                    }
                 }
             }
         }
