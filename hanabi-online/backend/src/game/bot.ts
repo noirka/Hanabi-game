@@ -19,9 +19,29 @@ export function decideMove(engine: GameEngine, player: Player): Move {
                 return { type: "play", playerId: player.id, cardIndex: i };
             }
         }
+        
+        if (info.color) {
+            const currentFireworkRank = snapshot.fireworks[info.color];
+            
+            if (currentFireworkRank === 4) {
+                return { type: "play", playerId: player.id, cardIndex: i };
+            }
+        }
     }
 
     if (snapshot.hints > 0) {
+        
+        if (snapshot.hints === 8) {
+            const botIndex = snapshot.players.findIndex(p => p.id === player.id);
+            const targetIndex = (botIndex + 1) % snapshot.players.length;
+            const target = snapshot.players[targetIndex];
+            
+            if (target && target.hand.length > 0) {
+                const firstCard = target.hand[0];
+                return { type: "hint", playerId: player.id, targetId: target.id, hint: { color: firstCard.color } };
+            }
+        }
+        
         for (const target of snapshot.players) {
             if (target.id === player.id) continue;
             
