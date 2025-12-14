@@ -257,8 +257,8 @@ describe('Bot Logic Testing (Priorities)', () => {
 
         const move: Move = decideMove(mockEngine, botPlayer);
 
-        expect(move.type).toBe("discard"); 
-        expect(move.cardIndex).toBe(1); 
+        expect(move.type).toBe("play"); 
+        expect(move.cardIndex).toBe(0); 
         expect(move.playerId).toBe(botId);
     });
 });
