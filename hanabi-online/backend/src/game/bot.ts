@@ -50,7 +50,7 @@ export function decideMove(engine: GameEngine, player: Player): Move {
                             type: "hint", 
                             playerId: player.id, 
                             targetId: target.id, 
-                            hint: { color: c.color, rank: c.rank } 
+                            hint: { color: c.color} 
                         };
                     }
                     
