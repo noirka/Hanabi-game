@@ -59,14 +59,15 @@ const NUM_PLAYERS = 3;
 
 function runMassSimulations() {
     console.log(`\n============================================`);
-    console.log(`  HANABI AI PERFORMANCE TEST: ${NUM_GAMES} Games`);
-    console.log(`  Players: ${NUM_PLAYERS} Bots`);
+    console.log(` HANABI AI PERFORMANCE TEST: ${NUM_GAMES} Games`);
+    console.log(` Players: ${NUM_PLAYERS} Bots`);
     console.log(`============================================`);
 
     let totalStrikes = 0;
     let totalMoveTimeNs = 0;
     let totalMoveCount = 0;
     let totalScore = 0;
+    let perfectScoreCount = 0; 
 
     const startTime = process.hrtime(); 
 
@@ -77,6 +78,10 @@ function runMassSimulations() {
         totalMoveTimeNs += result.totalMoveTimeNs;
         totalMoveCount += result.moveCount;
         totalScore += result.score;
+        
+        if (result.score === 25) {
+            perfectScoreCount++;
+        }
         
         if ((i + 1) % 100 === 0) {
             process.stdout.write(`\r[Progress: ${(i + 1)}/${NUM_GAMES} games completed]`);
@@ -89,11 +94,14 @@ function runMassSimulations() {
     const avgTimePerMoveNs = totalMoveCount > 0 ? totalMoveTimeNs / totalMoveCount : 0;
     const avgTimePerMoveMs = avgTimePerMoveNs / 1_000_000; 
     const averageScore = totalScore / NUM_GAMES;
+    
+    const perfectScoreRate = (perfectScoreCount / NUM_GAMES) * 100;
 
     console.log(`\r[Progress: ${NUM_GAMES}/${NUM_GAMES} games completed]`);
     console.log(`\n--- Performance & Final Score Results ---`);
     console.log(`Total Execution Time: ${executionTimeSeconds.toFixed(2)}s`);
     console.log(`Average Score (for context): ${averageScore.toFixed(2)} / 25`);
+    console.log(`Perfect Score Rate (25/25): ${perfectScoreRate.toFixed(2)}%`); 
     console.log(`Total Moves Tested: ${totalMoveCount}`);
     console.log(`\n--- Time Metrics ---`);
     console.log(`Average Time Per Move (ms): ${avgTimePerMoveMs.toFixed(3)}ms`);
