@@ -26,7 +26,7 @@ export class GameEngine {
     currentPlayerIndex = 0;
     finished = false;
 
-    finalTurnsRemaining: number | null = null;
+    finalTurnsRemaining: number | null = null; 
 
     listeners: Array<() => void> = [];
     logLines: string[] = [];
@@ -83,6 +83,22 @@ export class GameEngine {
         if (move.playerId !== player.id) {
             throw new Error("It's not this player's turn");
         }
+
+        if (move.type === "play" || move.type === "discard") {
+             if (move.cardIndex < 0 || move.cardIndex >= player.hand.length) {
+                throw new Error(`Invalid cardIndex in ${move.type} move`);
+             }
+        }
+
+        if (move.type === "hint") {
+            if (this.hints <= 0) {
+                throw new Error("No hint tokens left");
+            }
+
+            const target = this.players.find(p => p.id === move.targetId);
+            if (!target) throw new Error("Hint target does not exist");
+            if (player.id === target.id) throw new Error("Player cannot hint themselves");
+        }
     }
 
     private canPlay(card: { color: Color; rank: Rank }): boolean {
@@ -109,24 +125,12 @@ export class GameEngine {
 
     private triggerFinalRoundIfNeeded() {
         if (this.deck.length === 0 && this.finalTurnsRemaining === null) {
-            this.finalTurnsRemaining = this.players.length;
+            this.finalTurnsRemaining = this.players.length + 1; 
             this.log("Deck empty — final round begins");
         }
     }
 
-    private processFinalRoundStep(): boolean {
-        if (this.finalTurnsRemaining !== null) {
-            this.finalTurnsRemaining -= 1;
-            if (this.finalTurnsRemaining <= 0) {
-                this.finished = true;
-                this.log("Final round completed — game finished");
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private checkGameOverCommon() {
+    private checkGameOverCommon(): boolean {
         if (this.strikes >= this.MAX_STRIKES) { 
             this.finished = true;
             this.log("Game over — too many strikes");
@@ -148,9 +152,16 @@ export class GameEngine {
             this.emitChange();
             return;
         }
-        if (this.processFinalRoundStep()) {
-            this.emitChange();
-            return;
+
+        if (this.finalTurnsRemaining !== null) {
+            this.finalTurnsRemaining -= 1;
+            
+            if (this.finalTurnsRemaining <= 0) {
+                this.finished = true;
+                this.log("Final round completed — game finished");
+                this.emitChange();
+                return;
+            }
         }
 
         this.advanceTurn();
@@ -178,12 +189,9 @@ export class GameEngine {
         const player = this.players[this.currentPlayerIndex];
 
         if (move.type === "play") {
-            if (move.cardIndex < 0 || move.cardIndex >= player.hand.length) {
-                throw new Error("Invalid cardIndex in play");
-            }
-
+            
             const card = player.hand[move.cardIndex];
-            if (!card) throw new Error("Invalid card index");
+            if (!card) throw new Error("Invalid card index"); 
 
             if (this.canPlay(card)) {
                 this.fireworks[card.color] += 1;
@@ -211,12 +219,9 @@ export class GameEngine {
         }
 
         if (move.type === "discard") {
-            if (move.cardIndex < 0 || move.cardIndex >= player.hand.length) {
-                throw new Error("Invalid cardIndex in discard");
-            }
-
+            
             const card = player.hand[move.cardIndex];
-            if (!card) throw new Error("Invalid card index for discard");
+            if (!card) throw new Error("Invalid card index for discard"); 
 
             this.discard.push(card);
             this.log(`${player.name} discarded ${card.color} ${card.rank}`);
@@ -236,11 +241,7 @@ export class GameEngine {
 
         if (move.type === "hint") {
             const giver = this.players[this.currentPlayerIndex];
-            const target = this.players.find(p => p.id === move.targetId);
-
-            if (!target) throw new Error("Hint target does not exist");
-            if (giver.id === target.id) throw new Error("Player cannot hint themselves");
-            if (this.hints <= 0) throw new Error("No hint tokens left");
+            const target = this.players.find(p => p.id === move.targetId)!;
 
             this.hints--;
             const { color, rank } = move.hint;

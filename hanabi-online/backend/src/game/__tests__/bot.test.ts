@@ -70,7 +70,7 @@ describe('Bot Logic Testing (Priorities)', () => {
         expect(move.playerId).toBe(botId);
     });
     
-    test('P1.1: Bot should play card if color is known and it must be Rank 5', () => {
+    test('P1.1: Bot must DISCARD if only color is known for a Rank 5 card (no Rank known)', () => {
         const botId = 'bot-1';
         
         const cardToPlay: Card = { id: 'r5', color: 'red', rank: 5 };
@@ -94,13 +94,14 @@ describe('Bot Logic Testing (Priorities)', () => {
         ];
 
         const snapshot = createMockGameSnapshot(fireworks, players);
+        snapshot.hints = 0; 
         const mockEngine = new MockGameEngine(snapshot);
         const botPlayer = snapshot.players[0]; 
 
         const move: Move = decideMove(mockEngine, botPlayer);
 
-        expect(move.type).toBe("play");
-        expect(move.cardIndex).toBe(0);
+        expect(move.type).toBe("discard");
+        expect(move.cardIndex).toBe(1); 
         expect(move.playerId).toBe(botId);
     });
 
@@ -129,7 +130,7 @@ describe('Bot Logic Testing (Priorities)', () => {
         
         const players: Player[] = [
             { id: botId, name: 'Bot', isBot: true, hand: botHand, knownInfo: botKnownInfo },
-            { id: targetId, name: 'Player 2', isBot: false, hand: targetHand, knownInfo: [] },
+            { id: targetId, name: 'Player 2', isBot: false, hand: targetHand, knownInfo: [{}, {}, {}] }, 
         ];
 
         const snapshot: GameSnapshot = createMockGameSnapshot(fireworks, players);
@@ -145,7 +146,7 @@ describe('Bot Logic Testing (Priorities)', () => {
         const hintMove = move as { type: "hint"; targetId: string; hint: { color?: Color; rank?: Rank }; playerId: string };
 
         expect(hintMove.targetId).toBe(targetId);
-        expect(hintMove.hint).toEqual({ color: 'red' }); 
+        expect(hintMove.hint).toEqual({ rank: 1 }); 
         expect(hintMove.playerId).toBe(botId);
     });
     
@@ -171,7 +172,7 @@ describe('Bot Logic Testing (Priorities)', () => {
         
         const players: Player[] = [
             { id: botId, name: 'Bot', isBot: true, hand: botHand, knownInfo: botKnownInfo },
-            { id: targetId, name: 'Player 2', isBot: false, hand: targetHand, knownInfo: [] },
+            { id: targetId, name: 'Player 2', isBot: false, hand: targetHand, knownInfo: [{}, {}] }, 
         ];
 
         const snapshot: GameSnapshot = createMockGameSnapshot(fireworks, players);
@@ -211,7 +212,7 @@ describe('Bot Logic Testing (Priorities)', () => {
         
         const players: Player[] = [
             { id: botId, name: 'Bot', isBot: true, hand: botHand, knownInfo: botKnownInfo },
-            { id: targetId, name: 'Player 2', isBot: false, hand: targetHand, knownInfo: [] },
+            { id: targetId, name: 'Player 2', isBot: false, hand: targetHand, knownInfo: [{}, {}] },
         ];
 
         const snapshot: GameSnapshot = createMockGameSnapshot(fireworks, players);
@@ -223,11 +224,11 @@ describe('Bot Logic Testing (Priorities)', () => {
         const move: Move = decideMove(mockEngine, botPlayer);
 
         expect(move.type).toBe("discard");
-        expect(move.cardIndex).toBe(0);
+        expect(move.cardIndex).toBe(0); 
         expect(move.playerId).toBe(botId);
     });
 
-    test('P3.1: Bot must NOT discard a card that has known information (must discard unknown card at Index 1)', () => {
+    test('P3.1: Bot must DISCARD the completely unknown card (Index 1) before discarding a partially known card (Index 0) when hints are 0', () => {
         const botId = 'bot-1';
         
         const botHand: Card[] = [
@@ -240,7 +241,7 @@ describe('Bot Logic Testing (Priorities)', () => {
         } as Record<Color, number>;
 
         const knownInfo: KnownInfo[] = [
-            { color: 'white', rank: undefined }, 
+            { color: 'white', rank: undefined },
             {}, 
         ];
         
@@ -257,8 +258,8 @@ describe('Bot Logic Testing (Priorities)', () => {
 
         const move: Move = decideMove(mockEngine, botPlayer);
 
-        expect(move.type).toBe("play"); 
-        expect(move.cardIndex).toBe(0); 
+        expect(move.type).toBe("discard"); 
+        expect(move.cardIndex).toBe(1); 
         expect(move.playerId).toBe(botId);
     });
 });

@@ -243,13 +243,13 @@ describe('Game Engine Logic Testing', () => {
         const engine = new GameEngine();
         
         const players: Player[] = [
-            createPlayer(p1Id, 'Player 1', [cardToPlay], [{ color: 'red', rank: 1 }]),
-            createPlayer(p2Id, 'Player 2', [{ id: 'b1', color: 'blue', rank: 1 }], [{}])
+            createPlayer(p1Id, 'Player 1', [cardToPlay, { id: 'dummy_p1', color: 'white', rank: 1 }], [{ color: 'red', rank: 1 }, {}]),
+            createPlayer(p2Id, 'Player 2', [{ id: 'b1', color: 'blue', rank: 1 }, { id: 'dummy_p2', color: 'white', rank: 1 }], [{}, {}])
         ];
         
         engine.players = players;
         engine.fireworks = { red: 0, blue: 0, green: 0, yellow: 0, white: 0 } as Record<Color, number>;
-        engine.deck = []; 
+        engine.deck = [];
         engine.logLines = ["Game started"];
         engine.hints = 8;
         engine.strikes = 0;
@@ -258,15 +258,21 @@ describe('Game Engine Logic Testing', () => {
 
         let snapshot = engine.snapshot();
         expect(snapshot.logLines).toContain('[Turn 1] Deck empty — final round begins');
-        expect(engine.finalTurnsRemaining).toBe(1); 
+        expect(engine.finalTurnsRemaining).toBe(2);
         expect(snapshot.finished).toBe(false);
 
         engine.performMove({ type: "play", playerId: p2Id, cardIndex: 0 }); 
 
         snapshot = engine.snapshot();
+        expect(engine.finalTurnsRemaining).toBe(1);
+        expect(snapshot.finished).toBe(false);
+
+        engine.performMove({ type: "play", playerId: p1Id, cardIndex: 0 });
+
+        snapshot = engine.snapshot();
         expect(engine.finalTurnsRemaining).toBe(0); 
         expect(snapshot.finished).toBe(true);
-        expect(snapshot.logLines).toContain('[Turn 2] Final round completed — game finished');
+        expect(snapshot.logLines).toContain('[Turn 3] Final round completed — game finished');
     });
 
     
@@ -294,24 +300,29 @@ describe('Game Engine Logic Testing', () => {
             engine.strikes = 0;
             
             engine.players.forEach(p => {
-                p.hand = [{ id: p.id === 'human' ? 'r1' : 'b1', color: p.id === 'human' ? 'red' : 'blue', rank: 1 }]; 
-                p.knownInfo = [{}];
+                p.hand = [{ id: p.id === 'human' ? 'r1' : 'b1', color: p.id === 'human' ? 'red' : 'blue', rank: 1 }, { id: p.id === 'human' ? 'r2' : 'b2', color: p.id === 'human' ? 'red' : 'blue', rank: 2 }]; 
+                p.knownInfo = [{}, {}];
             });
             engine.turn = 1;
 
             const p1Id = engine.players[0].id;
+            const p2Id = engine.players[1].id;
 
             engine.performMove({ type: 'discard', cardIndex: 0, playerId: p1Id });
             let snapshot = engine.snapshot();
             expect(snapshot.logLines).toContain('[Turn 1] Deck empty — final round begins');
             
-            expect(engine.finalTurnsRemaining).toBe(1); 
+            expect(engine.finalTurnsRemaining).toBe(2);
             expect(snapshot.finished).toBe(false);
 
-
-            const p2Id = engine.players[1].id;
-            
             engine.performMove({ type: 'discard', cardIndex: 0, playerId: p2Id }); 
+
+            snapshot = engine.snapshot();
+            
+            expect(engine.finalTurnsRemaining).toBe(1);
+            expect(snapshot.finished).toBe(false);
+
+            engine.performMove({ type: 'discard', cardIndex: 0, playerId: p1Id }); 
 
             snapshot = engine.snapshot();
             
@@ -321,7 +332,7 @@ describe('Game Engine Logic Testing', () => {
             const finalScore = Object.values(snapshot.fireworks).reduce((sum, rank) => sum + rank, 0);
 
             expect(finalScore).toBe(0); 
-            expect(snapshot.logLines).toContain('[Turn 2] Final round completed — game finished');
+            expect(snapshot.logLines).toContain('[Turn 3] Final round completed — game finished'); 
         });
 
         test('should correctly end the game when 3 strikes are accumulated', () => {

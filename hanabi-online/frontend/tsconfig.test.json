@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.app.json", 
+  "compilerOptions": {
+    "module": "CommonJS", 
+    "target": "ES2020",
+    "jsx": "react",
+    "moduleResolution": "node",
+    
+    "types": ["jest", "@testing-library/jest-dom", "node"],
+    
+    "esModuleInterop": true, 
+    "noUncheckedSideEffectImports": false,
+    "verbatimModuleSyntax": false
+  },
+  "include": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+  "exclude": ["node_modules"]
+}

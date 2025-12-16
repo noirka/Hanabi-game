@@ -1,10 +1,7 @@
-// frontend/src/utils/apiClient.ts
-
 import { type Move, type GameSnapshot as GameState } from "../types.js"; 
 
 const API_BASE_URL = 'http://localhost:5000/api/game';
 
-// 1. Створення нової гри
 export async function createNewGame(playerCount: number): Promise<{ gameId: string, state: GameState }> {
     const response = await fetch(`${API_BASE_URL}/create`, {
         method: 'POST',
@@ -20,7 +17,6 @@ export async function createNewGame(playerCount: number): Promise<{ gameId: stri
     return response.json();
 }
 
-// 2. Відправка ходу гравця
 export async function sendMove(gameId: string, move: Move): Promise<{ state: GameState }> {
     const response = await fetch(`${API_BASE_URL}/move`, {
         method: 'POST',
@@ -37,7 +33,6 @@ export async function sendMove(gameId: string, move: Move): Promise<{ state: Gam
     return data;
 }
 
-// 3. Отримання поточного стану (якщо потрібно)
 export async function fetchGameState(gameId: string): Promise<GameState> {
     const response = await fetch(`${API_BASE_URL}/state/${gameId}`);
     

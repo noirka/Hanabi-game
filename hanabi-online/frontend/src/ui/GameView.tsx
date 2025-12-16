@@ -49,21 +49,21 @@ export const GameView: React.FC<GameViewProps> = ({ game, onMove, myPlayerIndex 
     const myPlayerID = game.players[myPlayerIndex].id; 
     
     const isMyTurn = game.currentPlayerIndex === myPlayerIndex;
-    const isMyTurnAndReady = isMyTurn && !isProcessingMove; 
+    const isMyTurnAndReady = isMyTurn && !isProcessingMove && gameState.status === 'in_progress'; 
 
     const executeMove = useCallback(async (move: Move) => {
-        if (!isMyTurnAndReady) return;
+        if (!isMyTurnAndReady) return;
 
-        setIsProcessingMove(true); 
+        setIsProcessingMove(true); 
 
-        try {
-            await onMove(move);
-        } catch (error) {
-            console.error("Error executing move:", error);
-        } finally {
-            setIsProcessingMove(false); 
-        }
-    }, [isMyTurnAndReady, onMove]); 
+        try {
+            await onMove(move);
+        } catch (error) {
+            console.error("Error executing move:", error);
+        } finally {
+            setIsProcessingMove(false); 
+        }
+    }, [isMyTurnAndReady, onMove]); 
 
     const handlePlayCard = (cardIndex: number) => {
         const move: Move = { type: 'play', cardIndex: cardIndex, playerId: myPlayerID }; 
@@ -135,12 +135,22 @@ export const GameView: React.FC<GameViewProps> = ({ game, onMove, myPlayerIndex 
         ...defaultStatusBarTextStyle, 
         color: gameState.errors > 0 ? '#f44336' : '#ccc', 
     };
-
+    
+    const isPlayerActionDisabled = !isMyTurnAndReady || gameState.status === 'game_over';
 
     return (
         <div style={{ maxWidth: 1000, margin: '0 auto', padding: 20, background: '#1c1c1c', color: '#f0f0f0' }}>
             
-            <h1 style={{ marginBottom: 15 }}>Hanabi — Online (Score: {gameState.score})</h1>
+            <h1 style={{ marginBottom: 15 }}>
+                Hanabi — Online ({gameState.status === 'game_over' ? 'Final Score' : 'Score'}: {gameState.score})
+            </h1>
+            
+            {gameState.status === 'game_over' && (
+                <div style={{ padding: '15px 0', textAlign: 'center', background: '#383838', marginBottom: 20, borderRadius: 8 }}>
+                    <h2 style={{ color: 'gold' }}>Game Over!</h2> 
+                    <p style={{ color: '#ccc' }}>Final Score: {gameState.score}</p>
+                </div>
+            )}
             
             <div style={statusBarContainerStyle}>
                 
@@ -158,7 +168,7 @@ export const GameView: React.FC<GameViewProps> = ({ game, onMove, myPlayerIndex 
                 
                 <button 
                     onClick={() => onMove({ type: 'restart', playerId: myPlayerID })} 
-                    disabled={isProcessingMove} // 👈 БЛОКУЄМО КНОПКУ РЕСТАРТУ
+                    disabled={isProcessingMove} 
                     style={{ padding: '5px 10px', background: '#555', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
                 >
                     Restart Game (New Game)
@@ -199,8 +209,8 @@ export const GameView: React.FC<GameViewProps> = ({ game, onMove, myPlayerIndex 
                         <HandView 
                             player={myPlayer}
                             isMe={true}
-                            onPlay={handlePlayCard}
-                            onDiscard={handleDiscardCard}
+                            onPlay={isPlayerActionDisabled ? undefined : handlePlayCard}
+                            onDiscard={isPlayerActionDisabled ? undefined : handleDiscardCard}
                             isMyTurn={isMyTurnAndReady} 
                         />
                         
@@ -211,7 +221,7 @@ export const GameView: React.FC<GameViewProps> = ({ game, onMove, myPlayerIndex 
                                 players={hintablePlayers}
                                 onHint={handleHint}
                                 hintsLeft={gameState.hints_left}
-                                disabled={!isMyTurnAndReady} 
+                                disabled={isPlayerActionDisabled || gameState.hints_left === 0} 
                             />
                         </div>
                     </div>
@@ -222,7 +232,7 @@ export const GameView: React.FC<GameViewProps> = ({ game, onMove, myPlayerIndex 
                                 key={player.id}
                                 player={player}
                                 isMe={false}
-                                isMyTurn={player.index === gameState.current_turn_index} 
+                                isMyTurn={player.index === gameState.current_turn_index && gameState.status === 'in_progress'} 
                             />
                         ))}
                     </div>
@@ -253,11 +263,11 @@ export const GameView: React.FC<GameViewProps> = ({ game, onMove, myPlayerIndex 
 
             </div>
             
-            {isProcessingMove && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <p style={{ color: 'white', fontSize: 24 }}>Processing Move...</p>
-                </div>
-            )}
+            {isProcessingMove && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+                    <p style={{ color: 'white', fontSize: 24 }}>Processing Move...</p>
+                </div>
+            )}
         </div>
     );
 };
