@@ -134,14 +134,39 @@ describe('Integration Test: Socket.io and Game Logic Flow', () => {
         populateDeck(); 
 
         const cleanup = gameEngineInstance.onChange(() => { 
-            const snapshot = gameEngineInstance.snapshot();
-            io.emit('gameUpdate', snapshot); 
+            gameEngineInstance.players.forEach((player, index) => {
+                const visibleState = gameEngineInstance.getVisibleState(index);
+                
+                const socket = Array.from(io.sockets.sockets.values()).find(s => s.data.playerId === player.id);
+
+                if (socket) {
+                    socket.emit('gameUpdate', visibleState);
+                }
+            });
         });
+        
         cleanupListeners.push(cleanup);
         
         gameEngineInstance.setup(initialPlayers);
     });
 
+    test('Client receives a sanitized snapshot (hidden card details) via getVisibleState', async () => {
+        
+        const initialSnapshotPromise = waitForSocketEvent<GameSnapshot>(client1, 'gameUpdate');
+        const initialSnapshot = await initialSnapshotPromise;
+
+        const playerIndex = initialSnapshot.players.findIndex(p => p.id === client1Id);
+        
+        const ownHand = initialSnapshot.players[playerIndex].hand;
+        
+        expect(ownHand.length).toBeGreaterThan(0); 
+
+        const firstCard = ownHand[0];
+        
+        expect(firstCard.color).toBe('placeholder');
+        expect(firstCard.rank).toBe(0);
+    });
+    
     test('Player 1 move should trigger game update visible to Player 2', async () => {
         const move = { 
             type: "hint" as const, 
@@ -206,8 +231,14 @@ describe('Integration Test: Socket.io and Game Logic Flow', () => {
         populateDeck(); 
 
         const cleanupE2E = gameEngineInstance.onChange(() => { 
-            const snapshot = gameEngineInstance.snapshot();
-            io.emit('gameUpdate', snapshot); 
+             gameEngineInstance.players.forEach((player, index) => {
+                const visibleState = gameEngineInstance.getVisibleState(index);
+                const socket = Array.from(io.sockets.sockets.values()).find(s => s.data.playerId === player.id);
+
+                if (socket) {
+                    socket.emit('gameUpdate', visibleState);
+                }
+            });
         });
         cleanupListeners.push(cleanupE2E); 
 

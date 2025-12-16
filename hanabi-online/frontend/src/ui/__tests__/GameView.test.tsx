@@ -1,8 +1,6 @@
-/// <reference types="jest" />
-/// <reference types="@testing-library/jest-dom" />
-
 import React from 'react'; 
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { GameView } from '../GameView';
 import { type GameSnapshot, type Color, type Move, type Rank } from '../../types'; 
 
