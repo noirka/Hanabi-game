@@ -93,3 +93,8 @@ npm test
 cd backend
 ts-node src/game/run_simulation.ts
 ```
+
+```bash
+cd frontend
+npm test
+```
